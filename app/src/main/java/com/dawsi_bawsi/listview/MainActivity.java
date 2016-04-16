@@ -2,9 +2,6 @@ package com.dawsi_bawsi.listview;
 
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
-import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -14,6 +11,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,15 +29,15 @@ import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
     public static final String BASE_URL = "https://content.dropboxapi.com/";
+    public static final int FINISH = 100;
     private static final String TAG = "MainActivity";
+    private static final boolean NOT_UPLOADED = true;
     ListView listView;
     MyAdaptor myAdaptor;
     HttpInterceptor httpInterceptor;
     Subscription sub;
     List<FileModel> personList;
     DropboxApi dropboxApi;
-    public static final int FINISH = 100;
-
 
     public DropboxApi getRetrofit() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
@@ -80,36 +78,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final int pos = position;
-                File img = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/huge.jpg");
-                ProgressFileRequestBody requestBody = new ProgressFileRequestBody(img, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-                    @Override
-                    public void transferred(long num) {
-                        Log.d(TAG, "transferred: " + num);
-                        publishProgress(pos, (int) num);
-                    }
-                });
-                String params = "{ \"path\": \"/CV/huge.jpg\", \"autorename\": true, \"mute\": false, \"mode\": { \".tag\": \"add\"} }";
-                sub = dropboxApi.uploadImage(requestBody, params)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Action1<Upload>() {
-                            @Override
-                            public void call(Upload upload) {
-                                Log.d(TAG, "call: " + upload);
-                                if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-                                    int positionInListView = pos - listView.getFirstVisiblePosition();
-                                    View v = listView.getChildAt(positionInListView);
-                                    myAdaptor.getItem(pos).setIsDownloaded(true);
-                                    myAdaptor.getItem(pos).progress = FINISH;
-                                    //myAdaptor.getItem(pos).name = "Chargement terminé";
-                                    myAdaptor.getView(pos, v, listView);
-                                } else {
-                                    myAdaptor.getItem(pos).setIsDownloaded(true);
-                                    myAdaptor.getItem(pos).progress = FINISH;
-                                    //myAdaptor.getItem(pos).name = "Chargement terminé";
-                                }
-                            }
-                        });
+                if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
+                    File img = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/huge.jpg");
+                    ProgressFileRequestBody requestBody = new ProgressFileRequestBody(img, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+                        @Override
+                        public void transferred(long num) {
+                            Log.d(TAG, "transferred: " + num);
+                            publishProgress(pos, (int) num);
+                        }
+                    });
+                    String params = "{ \"path\": \"/CV/huge.jpg\", \"autorename\": true, \"mute\": false, \"mode\": { \".tag\": \"add\"} }";
+                    upload(requestBody, params, pos);
+
+                }else{
+                    Toast.makeText(MainActivity.this, "OK", Toast.LENGTH_SHORT).show();
+                }
+
 
                 //download(pos);
 
@@ -120,6 +104,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void upload(ProgressFileRequestBody progressFileRequestBody, String params, int position){
+        final int pos = position;
+        sub = dropboxApi.uploadImage(progressFileRequestBody, params)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Upload>() {
+                    @Override
+                    public void call(Upload upload) {
+                        Log.d(TAG, "call: " + upload);
+                        if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
+                            int positionInListView = pos - listView.getFirstVisiblePosition();
+                            View v = listView.getChildAt(positionInListView);
+                            myAdaptor.getItem(pos).setIsDownloaded(true);
+                            myAdaptor.getView(pos, v, listView);
+                        } else {
+                            myAdaptor.getItem(pos).setIsDownloaded(true);
+                        }
+                    }
+                });
+    }
 
     @Override
     protected void onPause() {
