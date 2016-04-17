@@ -69,8 +69,9 @@ public class MainActivity extends AppCompatActivity {
         File[] f = readFiles();
         personList = new ArrayList<>();
         for (File file : f) {
-            Log.d(TAG, "onCreate: " + file.getName());
-            FileModel fileModel = new FileModel(file.getName(), file.getTotalSpace());
+            String fileType = getExtension(file);
+            Log.d(TAG, "onCreate: " + getExtension(file));
+            FileModel fileModel = new FileModel(file.getName(), file.getTotalSpace(), R.drawable.document);
             personList.add(fileModel);
         }
         myAdaptor = new MyAdaptor(MainActivity.this, R.layout.list_layout, personList);
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
                             publishProgress(pos, (int) num);
                         }
                     });
+
                     String params = "{ \"path\": \"/CV/huge.jpg\", \"autorename\": true, \"mute\": false, \"mode\": { \".tag\": \"add\"} }";
 
                     upload(requestBody, params, pos);
@@ -150,6 +152,20 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+    }
+
+    /*
+ * Get the extension of a file.
+ */
+    public static String getExtension(File f) {
+        String ext = null;
+        String s = f.getName();
+        int i = s.lastIndexOf('.');
+
+        if (i > 0 && i < s.length() - 1) {
+            ext = s.substring(i + 1).toLowerCase();
+        }
+        return ext;
     }
 
     private void upload(ProgressFileRequestBody progressFileRequestBody, String params, int position) {

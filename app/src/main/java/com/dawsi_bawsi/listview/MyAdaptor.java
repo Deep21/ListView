@@ -10,8 +10,9 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Spartiate on 13/03/2016.
@@ -19,15 +20,6 @@ import java.util.List;
 public class MyAdaptor extends ArrayAdapter<FileModel> {
     private static final String TAG = "MyAdaptor";
     int resource;
-
-    public List<FileModel> getPersons() {
-        return persons;
-    }
-
-    public void setPersons(List<FileModel> persons) {
-        this.persons = persons;
-    }
-
     List<FileModel> persons;
     Context context;
 
@@ -36,6 +28,15 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
         this.persons = objects;
         this.resource = resource;
         this.context = context;
+
+    }
+
+    public List<FileModel> getPersons() {
+        return persons;
+    }
+
+    public void setPersons(List<FileModel> persons) {
+        this.persons = persons;
     }
 
     @Override
@@ -59,27 +60,30 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder viewHolder;
-        if(convertView == null){
+        if (convertView == null) {
             viewHolder = new ViewHolder();
             Log.d(TAG, "getView : null " + position + convertView);
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.list_layout, parent, false);
-            viewHolder.progressBar = (ProgressBar)convertView.findViewById(R.id.progressBar);
-            viewHolder.txt1 = (TextView)convertView.findViewById(R.id.title2);
-            viewHolder.done = (ImageView)convertView.findViewById(R.id.done);
+            viewHolder.progressBar = (ProgressBar) convertView.findViewById(R.id.progressBar);
+            viewHolder.txt1 = (TextView) convertView.findViewById(R.id.title2);
+            viewHolder.done = (ImageView) convertView.findViewById(R.id.done);
+            viewHolder.fileTypeIcone = (ImageView) convertView.findViewById(R.id.img);
             convertView.setTag(viewHolder);
         }
-        viewHolder = (ViewHolder)convertView.getTag();
+        viewHolder = (ViewHolder) convertView.getTag();
+        viewHolder.fileTypeIcone.setImageResource(getItem(position).getIcone());
         //Upload non uploadé
         //On initialise les vues par défaut
-        if(!getItem(position).isDownloaded()){
-            viewHolder.progressBar.setVisibility(View.VISIBLE);
+        if (getItem(position).isDownloaded() != true) {
+
+            viewHolder.progressBar.setVisibility(View.GONE);
             viewHolder.progressBar.setProgress(getItem(position).progress);
             viewHolder.txt1.setText(getItem(position).filename);
             viewHolder.done.setVisibility(View.INVISIBLE);
 
         }//Upload terminé
-        else if(getItem(position).isDownloaded()){
+        else if (getItem(position).isDownloaded()) {
             //viewHolder.progressBar.setProgress(getItem(position).progress);
             viewHolder.progressBar.setVisibility(View.GONE);
             viewHolder.done.setVisibility(View.VISIBLE);
@@ -89,10 +93,10 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
         return convertView;
     }
 
-    class ViewHolder{
+    class ViewHolder {
         TextView txt1;
         TextView txt2;
-        ImageView imageView;
+        ImageView fileTypeIcone;
         ImageView done;
         ProgressBar progressBar;
 

@@ -6,14 +6,25 @@ package com.dawsi_bawsi.listview;
 class FileModel {
     String filename;
     long size;
-    int photoId;
+    int fileIcone;
     int progress;
-    private boolean isSelected;
     private boolean isDownloaded;
+    FileType fileType;
 
-    public FileModel(String name, long size) {
+    public int getIcone() {
+        return icone;
+    }
+
+    public void setIcone(int icone) {
+        this.icone = icone;
+    }
+
+    int icone;
+
+    public FileModel(String name, long size, int icone) {
         this.filename = name;
         this.size = size;
+        this.icone = icone;
     }
 
     public boolean isDownloaded() {
@@ -24,11 +35,25 @@ class FileModel {
         this.isDownloaded = isDownloaded;
     }
 
-    public boolean isSelected() {
-        return isSelected;
+    public void getIconeByFileType(String filename){
+        switch (filename){
+            case "jgp" :
+                //fileIcone =
+                break;
+
+            case "png" :
+                break;
+
+            case "txt" :
+                break;
+
+            case "pdf" :
+                break;
+
+            case "jpeg" :
+                break;
+
+        }
     }
 
-    public void setIsSelected(boolean isSelected) {
-        this.isSelected = isSelected;
-    }
 }

@@ -8,9 +8,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="New Text"
-        android:layout_above="@+id/done"
+        android:layout_above="@+id/imageView"
         android:layout_toRightOf="@+id/img"
-        android:layout_toEndOf="@+id/img" />
+        android:layout_toEndOf="@+id/img"
+        android:layout_marginLeft="20dp"
+        android:layout_marginStart="20dp" />
 
     <TextView
         android:id="@+id/title2"
@@ -18,28 +20,31 @@
         android:layout_height="wrap_content"
         android:text="Large Text"
         android:layout_below="@+id/title"
-        android:layout_toRightOf="@+id/img"
-        android:layout_toEndOf="@+id/img" />
+        android:layout_alignLeft="@+id/title"
+        android:layout_alignStart="@+id/title" />
 
 
     <ImageView
         android:focusable="false"
         android:focusableInTouchMode="false"
         android:id="@+id/img"
-        android:layout_width="70dp"
-        android:layout_height="80dp"
-        android:layout_alignParentTop="true"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/document"
+        android:layout_alignTop="@+id/title"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="24dp"
+        android:layout_marginStart="24dp" />
 
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/title"
-        android:layout_alignLeft="@+id/done"
-        android:layout_alignStart="@+id/done" />
+        android:layout_below="@+id/imageView"
+        android:layout_alignLeft="@+id/img"
+        android:layout_alignStart="@+id/img" />
 
     <ImageView
         android:layout_width="40dp"
@@ -51,5 +56,14 @@
         android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/imageView"
+        android:src="@drawable/upload"
+        android:layout_alignTop="@+id/done"
+        android:layout_toLeftOf="@+id/done"
+        android:layout_toStartOf="@+id/done" />
 
 </RelativeLayout>
