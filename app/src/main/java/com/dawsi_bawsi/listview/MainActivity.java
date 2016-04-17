@@ -71,8 +71,6 @@ public class MainActivity extends AppCompatActivity {
         File[] f = readFiles();
         personList = new ArrayList<>();
         for (File file : f) {
-            String fileType = getExtension(file);
-            Log.d(TAG, "onCreate: " + getExtension(file));
             FileModel fileModel = new FileModel(R.drawable.document, file);
             personList.add(fileModel);
         }
@@ -84,11 +82,17 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final int pos = position;
                 if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
+                    int positionInListView = pos - listView.getFirstVisiblePosition();
+                    View v = listView.getChildAt(positionInListView);
+                    myAdaptor.getItem(pos).setShowProgressbar(true);
+                    myAdaptor.getView(pos, v, listView);
                     upload(pos);
                 } else {
                     //TODO
+
                     AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
-                    builder1.setMessage("Voulez vous enoyer ce fichier");
+                    builder1.setTitle("Attention !");
+                    builder1.setMessage("Voulez vous uploadé ce fichier");
                     builder1.setCancelable(true);
                     builder1.setPositiveButton(
                             "Oui",

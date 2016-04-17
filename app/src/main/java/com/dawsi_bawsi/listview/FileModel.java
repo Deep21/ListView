@@ -6,6 +6,7 @@ import java.io.File;
  * Created by Spartiate on 11/03/2016.
  */
 class FileModel {
+    boolean showProgressbar;
     String filename;
     long size;
     int fileIcone;
@@ -14,16 +15,22 @@ class FileModel {
     File file;
     int icone;
     private boolean isDownloaded;
-
     public FileModel(String name, long size, int icone) {
         this.filename = name;
         this.size = size;
         this.icone = icone;
     }
-
     public FileModel(int icone, File f) {
         this.file = f;
         this.icone = icone;
+    }
+
+    public boolean isShowProgressbar() {
+        return showProgressbar;
+    }
+
+    public void setShowProgressbar(boolean showProgressbar) {
+        this.showProgressbar = showProgressbar;
     }
 
     public File getFile() {

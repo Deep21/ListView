@@ -75,9 +75,12 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
         viewHolder.fileTypeIcone.setImageResource(getItem(position).getIcone());
         //Upload non uploadé
         //On initialise les vues par défaut
-        if (getItem(position).isDownloaded() != true) {
 
-            viewHolder.progressBar.setVisibility(View.GONE);
+        if(getItem(position).isShowProgressbar()){
+            viewHolder.progressBar.setVisibility(View.VISIBLE);//on cache le progressbar
+        }
+
+        if (getItem(position).isDownloaded() != true) {
             viewHolder.progressBar.setProgress(getItem(position).progress);
             viewHolder.txt1.setText(getItem(position).getFile().getName());
             viewHolder.done.setVisibility(View.INVISIBLE);
