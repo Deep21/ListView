@@ -15,6 +15,8 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         for (File file : f) {
             String fileType = getExtension(file);
             Log.d(TAG, "onCreate: " + getExtension(file));
-            FileModel fileModel = new FileModel(file.getName(), file.getTotalSpace(), R.drawable.document);
+            FileModel fileModel = new FileModel(R.drawable.document, file);
             personList.add(fileModel);
         }
         myAdaptor = new MyAdaptor(MainActivity.this, R.layout.list_layout, personList);
@@ -82,26 +84,12 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final int pos = position;
                 if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
-                    File img = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/huge.jpg");
-                    ProgressFileRequestBody requestBody = new ProgressFileRequestBody(img, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-                        @Override
-                        public void transferred(long num) {
-                            Log.d(TAG, "transferred: " + num);
-                            publishProgress(pos, (int) num);
-                        }
-                    });
-
-                    String params = "{ \"path\": \"/CV/huge.jpg\", \"autorename\": true, \"mute\": false, \"mode\": { \".tag\": \"add\"} }";
-
-                    upload(requestBody, params, pos);
-
+                    upload(pos);
                 } else {
                     //TODO
-
                     AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
-                    builder1.setMessage("Vouslez vous enoyer ce fichier");
+                    builder1.setMessage("Voulez vous enoyer ce fichier");
                     builder1.setCancelable(true);
-
                     builder1.setPositiveButton(
                             "Oui",
                             new DialogInterface.OnClickListener() {
@@ -112,21 +100,7 @@ public class MainActivity extends AppCompatActivity {
                                         myAdaptor.getItem(pos).setIsDownloaded(false);
                                         myAdaptor.getView(pos, v, listView);
                                     }
-
-                                    File img = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/huge.jpg");
-
-                                    ProgressFileRequestBody requestBody = new ProgressFileRequestBody(img, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-                                        @Override
-                                        public void transferred(long num) {
-                                            Log.d(TAG, "transferred: " + num);
-                                            publishProgress(pos, (int) num);
-                                        }
-                                    });
-                                    String params = "{ \"path\": \"/CV/huge.jpg\", \"autorename\": true, \"mute\": false, \"mode\": { \".tag\": \"add\"} }";
-
-
-                                    Toast.makeText(MainActivity.this, "OK", Toast.LENGTH_SHORT).show();
-                                    upload(requestBody, params, pos);
+                                    upload(pos);
                                 }
                             });
 
@@ -140,13 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
                     AlertDialog alert11 = builder1.create();
                     alert11.show();
-
-
                 }
-
-
-                //download(pos);
-
 
             }
 
@@ -168,30 +136,42 @@ public class MainActivity extends AppCompatActivity {
         return ext;
     }
 
-    private void upload(ProgressFileRequestBody progressFileRequestBody, String params, int position) {
+    private void upload(int position) {
         final int pos = position;
-        sub = dropboxApi.uploadImage(progressFileRequestBody, params)
+        Gson gson = new Gson();
+        File file = myAdaptor.getItem(position).getFile();
+        String path = "/CV/" + file.getName();
+        UploadParam uploadParam = new UploadParam();
+        uploadParam.setPath(path);
+        uploadParam.setAutorename(true);
+        uploadParam.setMute(false);
+        Mode mode = new Mode();
+        mode.setTag("add");
+        uploadParam.setMode(mode);
+        String params = gson.toJson(uploadParam);
+        ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+            @Override
+            public void transferred(long num) {
+                Log.d(TAG, "transferred: " + num);
+                publishProgress(pos, (int) num);
+            }
+        });
+        sub = dropboxApi.uploadImage(requestBody, params)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<Upload>() {
                     @Override
                     public void call(Upload upload) {
-                        Log.d(TAG, "call: " + upload);
-                        if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-                            int positionInListView = pos - listView.getFirstVisiblePosition();
-                            View v = listView.getChildAt(positionInListView);
-                            myAdaptor.getItem(pos).setIsDownloaded(true);
-                            myAdaptor.getView(pos, v, listView);
-                        } else {
-                            myAdaptor.getItem(pos).setIsDownloaded(true);
-                        }
+                        refreshListView(pos);
                     }
                 });
     }
 
     @Override
     protected void onPause() {
-        sub.unsubscribe();
+        if(sub !=null)
+            sub.unsubscribe();
+
         super.onPause();
     }
 
@@ -239,6 +219,16 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }*/
 
+    public void refreshListView(int pos){
+        if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
+            int positionInListView = pos - listView.getFirstVisiblePosition();
+            View v = listView.getChildAt(positionInListView);
+            myAdaptor.getItem(pos).setIsDownloaded(true);
+            myAdaptor.getView(pos, v, listView);
+        } else {
+           // myAdaptor.getItem(pos).setIsDownloaded(true);
+        }
+    }
 
     public void publishProgress(int position, int progress) {
         if (position >= listView.getFirstVisiblePosition() && position <= listView.getLastVisiblePosition()) {

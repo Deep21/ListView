@@ -79,7 +79,7 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
 
             viewHolder.progressBar.setVisibility(View.GONE);
             viewHolder.progressBar.setProgress(getItem(position).progress);
-            viewHolder.txt1.setText(getItem(position).filename);
+            viewHolder.txt1.setText(getItem(position).getFile().getName());
             viewHolder.done.setVisibility(View.INVISIBLE);
 
         }//Upload terminé
