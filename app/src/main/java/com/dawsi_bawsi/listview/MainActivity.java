@@ -1,7 +1,9 @@
 package com.dawsi_bawsi.listview;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -88,10 +90,56 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                     String params = "{ \"path\": \"/CV/huge.jpg\", \"autorename\": true, \"mute\": false, \"mode\": { \".tag\": \"add\"} }";
+
                     upload(requestBody, params, pos);
 
-                }else{
-                    Toast.makeText(MainActivity.this, "OK", Toast.LENGTH_SHORT).show();
+                } else {
+                    //TODO
+
+                    AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
+                    builder1.setMessage("Vouslez vous enoyer ce fichier");
+                    builder1.setCancelable(true);
+
+                    builder1.setPositiveButton(
+                            "Oui",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
+                                        int positionInListView = pos - listView.getFirstVisiblePosition();
+                                        View v = listView.getChildAt(positionInListView);
+                                        myAdaptor.getItem(pos).setIsDownloaded(false);
+                                        myAdaptor.getView(pos, v, listView);
+                                    }
+
+                                    File img = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/huge.jpg");
+
+                                    ProgressFileRequestBody requestBody = new ProgressFileRequestBody(img, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+                                        @Override
+                                        public void transferred(long num) {
+                                            Log.d(TAG, "transferred: " + num);
+                                            publishProgress(pos, (int) num);
+                                        }
+                                    });
+                                    String params = "{ \"path\": \"/CV/huge.jpg\", \"autorename\": true, \"mute\": false, \"mode\": { \".tag\": \"add\"} }";
+
+
+                                    Toast.makeText(MainActivity.this, "OK", Toast.LENGTH_SHORT).show();
+                                    upload(requestBody, params, pos);
+                                }
+                            });
+
+                    builder1.setNegativeButton(
+                            "Non",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                }
+                            });
+
+                    AlertDialog alert11 = builder1.create();
+                    alert11.show();
+
+
                 }
 
 
@@ -104,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void upload(ProgressFileRequestBody progressFileRequestBody, String params, int position){
+    private void upload(ProgressFileRequestBody progressFileRequestBody, String params, int position) {
         final int pos = position;
         sub = dropboxApi.uploadImage(progressFileRequestBody, params)
                 .subscribeOn(Schedulers.io())

@@ -73,6 +73,7 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
         //Upload non uploadé
         //On initialise les vues par défaut
         if(!getItem(position).isDownloaded()){
+            viewHolder.progressBar.setVisibility(View.VISIBLE);
             viewHolder.progressBar.setProgress(getItem(position).progress);
             viewHolder.txt1.setText(getItem(position).filename);
             viewHolder.done.setVisibility(View.INVISIBLE);
