@@ -1,6 +1,8 @@
 package com.dawsi_bawsi.listview;
 
 import android.content.DialogInterface;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AlertDialog;
@@ -42,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     Subscription sub;
     List<FileModel> personList;
     DropboxApi dropboxApi;
-
+    NetworkChangeReceiver networkChangeReceiver;
     public DropboxApi getRetrofit() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -66,6 +68,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        networkChangeReceiver = new NetworkChangeReceiver();
+        registerReceiver(networkChangeReceiver, filter);
+
+
         dropboxApi = getRetrofit();
         listView = (ListView) findViewById(R.id.listView);
         File[] f = readFiles();
@@ -139,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return ext;
     }
+
 
     private void upload(int position) {
         final int pos = position;
@@ -269,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        unregisterReceiver(networkChangeReceiver);
         if (sub != null) {
             sub.unsubscribe();
         }
