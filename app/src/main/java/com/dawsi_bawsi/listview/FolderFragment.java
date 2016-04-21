@@ -51,11 +51,12 @@ public class FolderFragment extends Fragment {
             FileModel fileModel = new FileModel(R.drawable.folder ,f);
             fileModels.add(fileModel);
         }
-
-        FolderAdapter folderAdapter = new FolderAdapter(fileModels);
-        System.out.println(listView);
-        //listView.setAdapter(folderAdapter);
+        FolderAdapter folderAdapter = new FolderAdapter(fileModels, getContext());
+        listView.setAdapter(folderAdapter);
     }
+
+
+
 
     /**
      * Use this factory method to create a new instance of
