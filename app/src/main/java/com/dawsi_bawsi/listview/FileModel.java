@@ -10,7 +10,6 @@ class FileModel {
     long size;
     int fileIcone;
     int progress;
-    FileType fileType;
     File file;
     int icone;
     private boolean isDownloaded;
@@ -50,25 +49,5 @@ class FileModel {
         this.isDownloaded = isDownloaded;
     }
 
-    public void getIconeByFileType(String filename) {
-        switch (filename) {
-            case "jgp":
-                //fileIcone =
-                break;
-
-            case "png":
-                break;
-
-            case "txt":
-                break;
-
-            case "pdf":
-                break;
-
-            case "jpeg":
-                break;
-
-        }
-    }
 
 }

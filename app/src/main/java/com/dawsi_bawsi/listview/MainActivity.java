@@ -1,8 +1,10 @@
 package com.dawsi_bawsi.listview;
 
+
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -11,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -36,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int FINISH = 100;
     private static final String TAG = "MainActivity";
     private static final boolean NOT_UPLOADED = true;
-    ListView listView;
+    FrameLayout frameLayout;
     MyAdaptor myAdaptor;
     HttpInterceptor httpInterceptor;
     Subscription sub;
@@ -67,58 +70,9 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         dropboxApi = getRetrofit();
-        listView = (ListView) findViewById(R.id.listView);
-        File[] f = readFiles();
-        personList = new ArrayList<>();
-        for (File file : f) {
-            String fileType = getExtension(file);
-            Log.d(TAG, "onCreate: " + getExtension(file));
-            FileModel fileModel = new FileModel(R.drawable.document, file);
-            personList.add(fileModel);
-        }
-        myAdaptor = new MyAdaptor(MainActivity.this, R.layout.list_layout, personList);
-        listView.setAdapter(myAdaptor);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final int pos = position;
-                if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
-                    upload(pos);
-                } else {
-                    //TODO
-                    AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
-                    builder1.setMessage("Voulez vous enoyer ce fichier");
-                    builder1.setCancelable(true);
-                    builder1.setPositiveButton(
-                            "Oui",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-                                        int positionInListView = pos - listView.getFirstVisiblePosition();
-                                        View v = listView.getChildAt(positionInListView);
-                                        myAdaptor.getItem(pos).setIsDownloaded(false);
-                                        myAdaptor.getView(pos, v, listView);
-                                    }
-                                    upload(pos);
-                                }
-                            });
-
-                    builder1.setNegativeButton(
-                            "Non",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                }
-                            });
-
-                    AlertDialog alert11 = builder1.create();
-                    alert11.show();
-                }
-
-            }
-
-        });
+        frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
 
     }
 
@@ -153,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void transferred(long num) {
                 Log.d(TAG, "transferred: " + num);
-                publishProgress(pos, (int) num);
+                //publishProgress(pos, (int) num);
             }
         });
         sub = dropboxApi.uploadImage(requestBody, params)
@@ -162,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
                 .subscribe(new Action1<Upload>() {
                     @Override
                     public void call(Upload upload) {
-                        refreshListView(pos);
+                        //refreshListView(pos);
                     }
                 });
     }
@@ -181,6 +135,25 @@ public class MainActivity extends AppCompatActivity {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/");
+            file = f.listFiles();
+            return file;
+
+        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
+
+        } else {
+            // Something else is wrong. It may be one of many other states, but all we need
+            //  to know is we can neither read nor write
+        }
+        return file;
+    }
+
+
+    public File[] read() {
+        File[] file = null;
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download");
             file = f.listFiles();
             return file;
 
@@ -219,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }*/
 
-    public void refreshListView(int pos){
+/*    public void refreshListView(int pos){
         if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
             int positionInListView = pos - listView.getFirstVisiblePosition();
             View v = listView.getChildAt(positionInListView);
@@ -238,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
             p.setProgress(progress);
 
         }
-    }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

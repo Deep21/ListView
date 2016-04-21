@@ -28,7 +28,6 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
         this.persons = objects;
         this.resource = resource;
         this.context = context;
-
     }
 
     public List<FileModel> getPersons() {
@@ -41,10 +40,8 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
 
     @Override
     public int getPosition(FileModel item) {
-
         return super.getPosition(item);
     }
-
 
     @Override
     public int getCount() {
@@ -53,16 +50,15 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
 
     @Override
     public FileModel getItem(int position) {
-        Log.d(TAG, "getItem: " + position);
         return persons.get(position);
     }
+
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder viewHolder;
         if (convertView == null) {
             viewHolder = new ViewHolder();
-            Log.d(TAG, "getView : null " + position + convertView);
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.list_layout, parent, false);
             viewHolder.progressBar = (ProgressBar) convertView.findViewById(R.id.progressBar);
