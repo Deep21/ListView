@@ -20,15 +20,15 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link FolderFragment.OnFragmentInteractionListener} interface
+ * {@link FileFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link FolderFragment#newInstance} factory method to
+ * Use the {@link FileFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FolderFragment extends Fragment {
+public class FileFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    public static final String TAG = "FolderFragment";
+    public static final String TAG = "FileFragment";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     FolderAdapter folderAdapter;
@@ -40,34 +40,13 @@ public class FolderFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    public FolderFragment() {
+    public FileFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        List<FileModel> fileModels = new ArrayList<>();
-        File[] files = read();
-        for(File f : files){
-            FileModel fileModel = new FileModel(R.drawable.folder ,f);
-            fileModels.add(fileModel);
-        }
-        folderAdapter = new FolderAdapter(fileModels, getContext());
-        listView.setAdapter(folderAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String name = folderAdapter.getItem(position).getFile().getName();
-                File[] f = getFileByName(name).listFiles();
-                if(f.length > 0){
-                    if (mListener != null) {
-                        mListener.onFragmentInteraction();
-                    }
-                }
-
-            }
-        });
     }
 
 
@@ -83,8 +62,8 @@ public class FolderFragment extends Fragment {
      * @return A new instance of fragment FolderFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static FolderFragment newInstance() {
-        FolderFragment fragment = new FolderFragment();
+    public static FileFragment newInstance() {
+        FileFragment fragment = new FileFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -122,21 +101,21 @@ public class FolderFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.fragment_folder, container, false);
+        View v = inflater.inflate(R.layout.list_layout, container, false);
         listView = (ListView)v.findViewById(R.id.listView);
         return v;
     }
 
+    // TODO: Rename method, update argument and hook method into UI event
+    public void onButtonPressed(Uri uri) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(uri);
+        }
+    }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
     }
 
     @Override
@@ -157,6 +136,6 @@ public class FolderFragment extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction();
+        void onFragmentInteraction(Uri uri);
     }
 }

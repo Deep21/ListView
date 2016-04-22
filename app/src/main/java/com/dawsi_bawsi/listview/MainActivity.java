@@ -34,7 +34,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements FolderFragment.OnFragmentInteractionListener {
     public static final String BASE_URL = "https://content.dropboxapi.com/";
     public static final int FINISH = 100;
     private static final String TAG = "MainActivity";
@@ -242,5 +242,12 @@ public class MainActivity extends AppCompatActivity {
             sub.unsubscribe();
         }
         super.onDestroy();
+    }
+
+    @Override
+    public void onFragmentInteraction() {
+        Toast.makeText(MainActivity.this, "on Click", Toast.LENGTH_SHORT).show();
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout, FileFragment.newInstance(), FileFragment.TAG).addToBackStack(null).commit();
     }
 }
