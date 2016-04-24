@@ -1,9 +1,11 @@
 package com.dawsi_bawsi.listview;
 
+
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.app.AlertDialog;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -11,8 +13,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.FrameLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -26,18 +28,19 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.HEAD;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements FolderFragment.OnFragmentInteractionListener, FileFragment.OnFolderListener {
     public static final String BASE_URL = "https://content.dropboxapi.com/";
     public static final int FINISH = 100;
     private static final String TAG = "MainActivity";
     private static final boolean NOT_UPLOADED = true;
-    ListView listView;
-    MyAdaptor myAdaptor;
+    FrameLayout frameLayout;
+    FileAdaptor fileAdaptor;
     HttpInterceptor httpInterceptor;
     Subscription sub;
     List<FileModel> personList;
@@ -51,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
                 .addInterceptor(httpInterceptor)
                 .addInterceptor(interceptor)
                 .build();
-
         return new Retrofit.Builder()
                 .client(client)
                 .baseUrl(BASE_URL)
@@ -67,83 +69,16 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         dropboxApi = getRetrofit();
-        listView = (ListView) findViewById(R.id.listView);
-        File[] f = readFiles();
-        personList = new ArrayList<>();
-        for (File file : f) {
-            FileModel fileModel = new FileModel(R.drawable.document, file);
-            personList.add(fileModel);
-        }
-        myAdaptor = new MyAdaptor(MainActivity.this, R.layout.list_layout, personList);
-        listView.setAdapter(myAdaptor);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final int pos = position;
-                if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
-                    int positionInListView = pos - listView.getFirstVisiblePosition();
-                    View v = listView.getChildAt(positionInListView);
-                    myAdaptor.getItem(pos).setShowProgressbar(true);
-                    myAdaptor.getView(pos, v, listView);
-                    upload(pos);
-                } else {
-                    //TODO
-
-                    AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
-                    builder1.setTitle("Attention !");
-                    builder1.setMessage("Voulez vous uploadé ce fichier");
-                    builder1.setCancelable(true);
-                    builder1.setPositiveButton(
-                            "Oui",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-                                        int positionInListView = pos - listView.getFirstVisiblePosition();
-                                        View v = listView.getChildAt(positionInListView);
-                                        myAdaptor.getItem(pos).setIsDownloaded(false);
-                                        myAdaptor.getView(pos, v, listView);
-                                    }
-                                    upload(pos);
-                                }
-                            });
-
-                    builder1.setNegativeButton(
-                            "Non",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                }
-                            });
-
-                    AlertDialog alert11 = builder1.create();
-                    alert11.show();
-                }
-
-            }
-
-        });
-
+        frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
     }
 
-    /*
- * Get the extension of a file.
- */
-    public static String getExtension(File f) {
-        String ext = null;
-        String s = f.getName();
-        int i = s.lastIndexOf('.');
-
-        if (i > 0 && i < s.length() - 1) {
-            ext = s.substring(i + 1).toLowerCase();
-        }
-        return ext;
-    }
 
     private void upload(int position) {
         final int pos = position;
         Gson gson = new Gson();
-        File file = myAdaptor.getItem(position).getFile();
+        File file = fileAdaptor.getItem(position).getFile();
         String path = "/CV/" + file.getName();
         UploadParam uploadParam = new UploadParam();
         uploadParam.setPath(path);
@@ -157,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void transferred(long num) {
                 Log.d(TAG, "transferred: " + num);
-                publishProgress(pos, (int) num);
+                //publishProgress(pos, (int) num);
             }
         });
         sub = dropboxApi.uploadImage(requestBody, params)
@@ -166,14 +101,14 @@ public class MainActivity extends AppCompatActivity {
                 .subscribe(new Action1<Upload>() {
                     @Override
                     public void call(Upload upload) {
-                        refreshListView(pos);
+                        //refreshListView(pos);
                     }
                 });
     }
 
     @Override
     protected void onPause() {
-        if(sub !=null)
+        if (sub != null)
             sub.unsubscribe();
 
         super.onPause();
@@ -185,6 +120,25 @@ public class MainActivity extends AppCompatActivity {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/");
+            file = f.listFiles();
+            return file;
+
+        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
+
+        } else {
+            // Something else is wrong. It may be one of many other states, but all we need
+            //  to know is we can neither read nor write
+        }
+        return file;
+    }
+
+
+    public File[] read() {
+        File[] file = null;
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download");
             file = f.listFiles();
             return file;
 
@@ -223,14 +177,14 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }*/
 
-    public void refreshListView(int pos){
+/*    public void refreshListView(int pos){
         if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
             int positionInListView = pos - listView.getFirstVisiblePosition();
             View v = listView.getChildAt(positionInListView);
-            myAdaptor.getItem(pos).setIsDownloaded(true);
-            myAdaptor.getView(pos, v, listView);
+            fileAdaptor.getItem(pos).setIsDownloaded(true);
+            fileAdaptor.getView(pos, v, listView);
         } else {
-           // myAdaptor.getItem(pos).setIsDownloaded(true);
+           // fileAdaptor.getItem(pos).setIsDownloaded(true);
         }
     }
 
@@ -242,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
             p.setProgress(progress);
 
         }
-    }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -273,5 +227,27 @@ public class MainActivity extends AppCompatActivity {
             sub.unsubscribe();
         }
         super.onDestroy();
+    }
+
+    public File[] getFiles() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FolderFragment folderFragment = (FolderFragment) fragmentManager.findFragmentByTag(FolderFragment.TAG);
+        if (folderFragment != null) {
+            return folderFragment.getFiles();
+        }
+        return null;
+    }
+
+    @Override
+    public void onFragmentInteraction(int i) {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout, FileFragment.newInstance(i), FileFragment.TAG).addToBackStack(null).commit();
+    }
+
+
+    @Override
+    public void createFolderFragment() {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).addToBackStack(null).commit();
     }
 }

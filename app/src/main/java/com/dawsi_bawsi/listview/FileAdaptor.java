@@ -1,34 +1,27 @@
 package com.dawsi_bawsi.listview;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Spartiate on 13/03/2016.
  */
-public class MyAdaptor extends ArrayAdapter<FileModel> {
-    private static final String TAG = "MyAdaptor";
-    int resource;
+public class FileAdaptor extends BaseAdapter {
+    private static final String TAG = "FileAdaptor";
     List<FileModel> persons;
     Context context;
 
-    public MyAdaptor(Context context, int resource, List<FileModel> objects) {
-        super(context, resource, objects);
+    public FileAdaptor(Context context, List<FileModel> objects) {
         this.persons = objects;
-        this.resource = resource;
         this.context = context;
-
     }
 
     public List<FileModel> getPersons() {
@@ -39,12 +32,6 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
         this.persons = persons;
     }
 
-    @Override
-    public int getPosition(FileModel item) {
-
-        return super.getPosition(item);
-    }
-
 
     @Override
     public int getCount() {
@@ -53,16 +40,20 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
 
     @Override
     public FileModel getItem(int position) {
-        Log.d(TAG, "getItem: " + position);
         return persons.get(position);
     }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder viewHolder;
         if (convertView == null) {
             viewHolder = new ViewHolder();
-            Log.d(TAG, "getView : null " + position + convertView);
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.list_layout, parent, false);
             viewHolder.progressBar = (ProgressBar) convertView.findViewById(R.id.progressBar);
@@ -72,7 +63,7 @@ public class MyAdaptor extends ArrayAdapter<FileModel> {
             convertView.setTag(viewHolder);
         }
         viewHolder = (ViewHolder) convertView.getTag();
-        viewHolder.fileTypeIcone.setImageResource(getItem(position).getIcone());
+        viewHolder.fileTypeIcone.setImageResource((getItem(position).isFile) ?  R.drawable.document : R.drawable.folder);
         //Upload non uploadé
         //On initialise les vues par défaut
 
