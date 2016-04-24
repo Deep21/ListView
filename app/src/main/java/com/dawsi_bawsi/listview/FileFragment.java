@@ -1,7 +1,6 @@
 package com.dawsi_bawsi.listview;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -11,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,29 +31,15 @@ public class FileFragment extends Fragment {
     public static final String TAG = "FileFragment";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    FolderAdapter folderAdapter;
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    FileAdaptor fileAdaptor;
     ListView listView;
-
+    // TODO: Rename and change types of parameters
+    private int position;
     private OnFragmentInteractionListener mListener;
 
     public FileFragment() {
         // Required empty public constructor
     }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-
-    public File getFileByName(String fileName){
-        return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
-    }
-
 
     /**
      * Use this factory method to create a new instance of
@@ -62,13 +48,43 @@ public class FileFragment extends Fragment {
      * @return A new instance of fragment FolderFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static FileFragment newInstance() {
+    public static FileFragment newInstance(int i) {
         FileFragment fragment = new FileFragment();
         Bundle args = new Bundle();
+        args.putInt("position", i);
         fragment.setArguments(args);
         return fragment;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart: " + position);
+        MainActivity mainActivity = (MainActivity) getActivity();
+        String name = mainActivity.getFiles()[position].getName();
+        File[] files = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + mainActivity.getFiles()[position].getName() + "/").listFiles();
+        Log.d(TAG, "onStart: " + name);
+        List<FileModel> fileModels = new ArrayList<>();
+        for(File f : files){
+            Log.d(TAG, "onStart: " + f.getName());
+            FileModel fileModel = new FileModel(f);
+            fileModels.add(fileModel);
+        }
+        fileAdaptor = new FileAdaptor(getContext(), fileModels);
+        listView.setAdapter(fileAdaptor);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        });
+        Log.d(TAG, "onStart: " + listView);
+    }
+
+    public void getFiles(int position) {
+
+        // return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + mainActivity.getFiles()[position].getName() + "/");
+    }
 
     public File[] read() {
         File[] file = null;
@@ -88,30 +104,23 @@ public class FileFragment extends Fragment {
     }
 
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            position = getArguments().getInt("position");
+            Toast.makeText(getContext(), "" + listView, Toast.LENGTH_SHORT).show();
+
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.list_layout, container, false);
-        listView = (ListView)v.findViewById(R.id.listView);
+        View v = inflater.inflate(R.layout.fragment_folder, container, false);
+        listView = (ListView) v.findViewById(R.id.listView);
         return v;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
 
     @Override
     public void onAttach(Context context) {
@@ -136,6 +145,6 @@ public class FileFragment extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+        void onFragmentInteraction();
     }
 }

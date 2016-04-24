@@ -1,9 +1,9 @@
 package com.dawsi_bawsi.listview;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,49 +32,15 @@ public class FolderFragment extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     FolderAdapter folderAdapter;
-
+    private File[] files;
+    ListView listView;
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-    ListView listView;
-
     private OnFragmentInteractionListener mListener;
-
     public FolderFragment() {
         // Required empty public constructor
     }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        List<FileModel> fileModels = new ArrayList<>();
-        File[] files = read();
-        for(File f : files){
-            FileModel fileModel = new FileModel(R.drawable.folder ,f);
-            fileModels.add(fileModel);
-        }
-        folderAdapter = new FolderAdapter(fileModels, getContext());
-        listView.setAdapter(folderAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String name = folderAdapter.getItem(position).getFile().getName();
-                File[] f = getFileByName(name).listFiles();
-                if(f.length > 0){
-                    if (mListener != null) {
-                        mListener.onFragmentInteraction();
-                    }
-                }
-
-            }
-        });
-    }
-
-
-    public File getFileByName(String fileName){
-        return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
-    }
-
 
     /**
      * Use this factory method to create a new instance of
@@ -90,6 +56,43 @@ public class FolderFragment extends Fragment {
         return fragment;
     }
 
+    public File[] getFiles() {
+        return files;
+    }
+
+    public void setFiles(File[] files) {
+        this.files = files;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        List<FileModel> fileModels = new ArrayList<>();
+        files = read();
+        for (File f : files) {
+            FileModel fileModel = new FileModel(f);
+            fileModels.add(fileModel);
+        }
+        folderAdapter = new FolderAdapter(fileModels, getContext());
+        listView.setAdapter(folderAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String name = folderAdapter.getItem(position).getFile().getName();
+                File[] f = getFileByName(name).listFiles();
+                if (f.length > 0) {
+                    if (mListener != null) {
+                        mListener.onFragmentInteraction(position);
+                    }
+                }
+
+            }
+        });
+    }
+
+    public File getFileByName(String fileName) {
+        return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
+    }
 
     public File[] read() {
         File[] file = null;
@@ -109,7 +112,6 @@ public class FolderFragment extends Fragment {
     }
 
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,7 +125,7 @@ public class FolderFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_folder, container, false);
-        listView = (ListView)v.findViewById(R.id.listView);
+        listView = (ListView) v.findViewById(R.id.listView);
         return v;
     }
 
@@ -157,6 +159,6 @@ public class FolderFragment extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction();
+        void onFragmentInteraction(int i);
     }
 }

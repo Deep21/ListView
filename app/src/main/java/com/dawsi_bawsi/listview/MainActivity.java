@@ -1,27 +1,21 @@
 package com.dawsi_bawsi.listview;
 
 
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.FrameLayout;
-import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -40,11 +34,25 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     private static final String TAG = "MainActivity";
     private static final boolean NOT_UPLOADED = true;
     FrameLayout frameLayout;
-    MyAdaptor myAdaptor;
+    FileAdaptor fileAdaptor;
     HttpInterceptor httpInterceptor;
     Subscription sub;
     List<FileModel> personList;
     DropboxApi dropboxApi;
+
+    /*
+ * Get the extension of a file.
+ */
+    public static String getExtension(File f) {
+        String ext = null;
+        String s = f.getName();
+        int i = s.lastIndexOf('.');
+
+        if (i > 0 && i < s.length() - 1) {
+            ext = s.substring(i + 1).toLowerCase();
+        }
+        return ext;
+    }
 
     public DropboxApi getRetrofit() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
@@ -76,24 +84,10 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
 
     }
 
-    /*
- * Get the extension of a file.
- */
-    public static String getExtension(File f) {
-        String ext = null;
-        String s = f.getName();
-        int i = s.lastIndexOf('.');
-
-        if (i > 0 && i < s.length() - 1) {
-            ext = s.substring(i + 1).toLowerCase();
-        }
-        return ext;
-    }
-
     private void upload(int position) {
         final int pos = position;
         Gson gson = new Gson();
-        File file = myAdaptor.getItem(position).getFile();
+        File file = fileAdaptor.getItem(position).getFile();
         String path = "/CV/" + file.getName();
         UploadParam uploadParam = new UploadParam();
         uploadParam.setPath(path);
@@ -123,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
 
     @Override
     protected void onPause() {
-        if(sub !=null)
+        if (sub != null)
             sub.unsubscribe();
 
         super.onPause();
@@ -196,10 +190,10 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
             int positionInListView = pos - listView.getFirstVisiblePosition();
             View v = listView.getChildAt(positionInListView);
-            myAdaptor.getItem(pos).setIsDownloaded(true);
-            myAdaptor.getView(pos, v, listView);
+            fileAdaptor.getItem(pos).setIsDownloaded(true);
+            fileAdaptor.getView(pos, v, listView);
         } else {
-           // myAdaptor.getItem(pos).setIsDownloaded(true);
+           // fileAdaptor.getItem(pos).setIsDownloaded(true);
         }
     }
 
@@ -244,10 +238,19 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         super.onDestroy();
     }
 
+    public File[] getFiles() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FolderFragment folderFragment = (FolderFragment) fragmentManager.findFragmentByTag(FolderFragment.TAG);
+        if (folderFragment != null) {
+            return folderFragment.getFiles();
+        }
+        return null;
+    }
+
     @Override
-    public void onFragmentInteraction() {
+    public void onFragmentInteraction(int i) {
         Toast.makeText(MainActivity.this, "on Click", Toast.LENGTH_SHORT).show();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, FileFragment.newInstance(), FileFragment.TAG).addToBackStack(null).commit();
+        fragmentTransaction.replace(R.id.frame_layout, FileFragment.newInstance(i), FileFragment.TAG).addToBackStack(null).commit();
     }
 }

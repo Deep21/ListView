@@ -20,7 +20,7 @@ class FileModel {
         this.icone = icone;
     }
 
-    public FileModel(int icone, File f) {
+    public FileModel(File f) {
         this.file = f;
         this.icone = icone;
     }
