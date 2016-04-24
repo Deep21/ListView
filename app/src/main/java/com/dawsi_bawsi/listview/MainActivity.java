@@ -249,7 +249,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
 
     @Override
     public void onFragmentInteraction(int i) {
-        Toast.makeText(MainActivity.this, "on Click", Toast.LENGTH_SHORT).show();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.frame_layout, FileFragment.newInstance(i), FileFragment.TAG).addToBackStack(null).commit();
     }

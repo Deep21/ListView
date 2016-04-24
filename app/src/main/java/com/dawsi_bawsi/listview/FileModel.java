@@ -8,10 +8,10 @@ import java.io.File;
 class FileModel {
     String filename;
     long size;
-    int fileIcone;
     int progress;
     File file;
     int icone;
+    boolean isFile;
     private boolean isDownloaded;
 
     public FileModel(String name, long size, int icone) {
@@ -22,7 +22,7 @@ class FileModel {
 
     public FileModel(File f) {
         this.file = f;
-        this.icone = icone;
+        isFile = file.isFile();
     }
 
     public File getFile() {

@@ -63,7 +63,7 @@ public class FileAdaptor extends BaseAdapter {
             convertView.setTag(viewHolder);
         }
         viewHolder = (ViewHolder) convertView.getTag();
-        viewHolder.fileTypeIcone.setImageResource(R.drawable.document);
+        viewHolder.fileTypeIcone.setImageResource((getItem(position).isFile) ?  R.drawable.document : R.drawable.folder);
         //Upload non uploadé
         //On initialise les vues par défaut
         if (getItem(position).isDownloaded() != true) {
