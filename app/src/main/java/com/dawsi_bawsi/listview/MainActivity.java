@@ -23,9 +23,11 @@ import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -67,106 +69,29 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         dropboxApi = getRetrofit();
-        listView = (ListView) findViewById(R.id.listView);
-        File[] f = readFiles();
-        personList = new ArrayList<>();
-        for (File file : f) {
-            FileModel fileModel = new FileModel(R.drawable.document, file);
-            personList.add(fileModel);
-        }
-        myAdaptor = new MyAdaptor(MainActivity.this, R.layout.list_layout, personList);
-        listView.setAdapter(myAdaptor);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final int pos = position;
-                if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
-                    int positionInListView = pos - listView.getFirstVisiblePosition();
-                    View v = listView.getChildAt(positionInListView);
-                    myAdaptor.getItem(pos).setShowProgressbar(true);
-                    myAdaptor.getView(pos, v, listView);
-                    upload(pos);
-                } else {
-                    //TODO
-
-                    AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
-                    builder1.setTitle("Attention !");
-                    builder1.setMessage("Voulez vous uploadé ce fichier");
-                    builder1.setCancelable(true);
-                    builder1.setPositiveButton(
-                            "Oui",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-                                        int positionInListView = pos - listView.getFirstVisiblePosition();
-                                        View v = listView.getChildAt(positionInListView);
-                                        myAdaptor.getItem(pos).setIsDownloaded(false);
-                                        myAdaptor.getView(pos, v, listView);
-                                    }
-                                    upload(pos);
-                                }
-                            });
-
-                    builder1.setNegativeButton(
-                            "Non",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                }
-                            });
-
-                    AlertDialog alert11 = builder1.create();
-                    alert11.show();
-                }
-
-            }
-
-        });
+        upload(1);
 
     }
 
-    /*
- * Get the extension of a file.
- */
-    public static String getExtension(File f) {
-        String ext = null;
-        String s = f.getName();
-        int i = s.lastIndexOf('.');
-
-        if (i > 0 && i < s.length() - 1) {
-            ext = s.substring(i + 1).toLowerCase();
-        }
-        return ext;
-    }
 
     private void upload(int position) {
-        final int pos = position;
-        Gson gson = new Gson();
-        File file = myAdaptor.getItem(position).getFile();
-        String path = "/CV/" + file.getName();
-        UploadParam uploadParam = new UploadParam();
-        uploadParam.setPath(path);
-        uploadParam.setAutorename(true);
-        uploadParam.setMute(false);
-        Mode mode = new Mode();
-        mode.setTag("add");
-        uploadParam.setMode(mode);
-        String params = gson.toJson(uploadParam);
-        ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-            @Override
-            public void transferred(long num) {
-                Log.d(TAG, "transferred: " + num);
-                publishProgress(pos, (int) num);
-            }
-        });
-        sub = dropboxApi.uploadImage(requestBody, params)
+        sub = dropboxApi.testCase()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Upload>() {
+                .subscribe(new Subscriber<Response<Upload>>() {
                     @Override
-                    public void call(Upload upload) {
-                        refreshListView(pos);
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "onError: ");
+                    }
+
+                    @Override
+                    public void onNext(Response<Upload> uploadResponse) {
+                        Log.d(TAG, "onNext: " + uploadResponse.code());
                     }
                 });
     }
@@ -179,24 +104,6 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-
-    public File[] readFiles() {
-        File[] file = null;
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/");
-            file = f.listFiles();
-            return file;
-
-        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
-
-        } else {
-            // Something else is wrong. It may be one of many other states, but all we need
-            //  to know is we can neither read nor write
-        }
-        return file;
-    }
 
 /*    private void download(final int positionInAdapter) {
         new Thread(new Runnable() {
