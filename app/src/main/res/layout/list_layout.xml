@@ -4,7 +4,7 @@
     android:layout_height="100dp">
 
     <TextView
-        android:id="@+id/title"
+        android:id="@+id/nom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="New Text"
@@ -19,9 +19,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Large Text"
-        android:layout_below="@+id/title"
-        android:layout_alignLeft="@+id/title"
-        android:layout_alignStart="@+id/title" />
+        android:layout_below="@+id/nom"
+        android:layout_alignLeft="@+id/nom"
+        android:layout_alignStart="@+id/nom" />
 
 
     <ImageView
@@ -31,7 +31,7 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:src="@drawable/document"
-        android:layout_alignTop="@+id/title"
+        android:layout_alignTop="@+id/nom"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginLeft="24dp"

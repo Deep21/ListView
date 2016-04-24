@@ -8,7 +8,7 @@ import retrofit2.http.Part;
 import rx.Observable;
 
 /**
- * Created by Spartiate on 26/03/2016.
+ * Created by Spartiate on 26/03/2016
  */
 public interface DropboxApi {
 

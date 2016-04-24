@@ -9,20 +9,26 @@ class FileModel {
     boolean showProgressbar;
     String filename;
     long size;
-    int fileIcone;
     int progress;
-    FileType fileType;
     File file;
     int icone;
+    boolean isFile;
     private boolean isDownloaded;
     public FileModel(String name, long size, int icone) {
         this.filename = name;
         this.size = size;
         this.icone = icone;
     }
+
     public FileModel(int icone, File f) {
+
+    }
+
+
+    public FileModel(File f) {
+
         this.file = f;
-        this.icone = icone;
+        isFile = file.isFile();
     }
 
     public boolean isShowProgressbar() {
@@ -57,25 +63,5 @@ class FileModel {
         this.isDownloaded = isDownloaded;
     }
 
-    public void getIconeByFileType(String filename) {
-        switch (filename) {
-            case "jgp":
-                //fileIcone =
-                break;
-
-            case "png":
-                break;
-
-            case "txt":
-                break;
-
-            case "pdf":
-                break;
-
-            case "jpeg":
-                break;
-
-        }
-    }
 
 }
