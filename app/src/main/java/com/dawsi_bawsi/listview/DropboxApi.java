@@ -23,14 +23,13 @@ public interface DropboxApi {
     Observable<Upload> uploadImage(@Part("hello\"; filename=\"hello.txt\" ") ProgressFileRequestBody file, @Header("Dropbox-API-Arg") String fileUploadParam);
 
     @GET("http://www.mocky.io/v2/571d3c83110000fa2c291078")
-    Observable<Response<Upload>> testCase400();
 
+    Observable<Response<Upload>> testCase400();
 
     @GET("http://www.mocky.io/v2/571e69b00f00005b1a127cc5")
     Observable<Response<Upload>> testCase401();
 
     @GET("http://www.mocky.io/v2/571e7a6e0f0000aa1c127cd7")
     Observable<Response<Upload>> testCase200();
-
 
 }

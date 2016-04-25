@@ -1,24 +1,15 @@
 package com.dawsi_bawsi.listview;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
-import com.google.gson.Gson;
-
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -27,7 +18,6 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
-import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -75,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void upload(int position) {
+
         sub = dropboxApi.testCase200()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -82,9 +73,9 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
                         Log.d(TAG, "onNext: doOnNext " + uploadResponse.code());
-                        switch (uploadResponse.code()){
+                        switch (uploadResponse.code()) {
 
-                            case HttpInterceptor.UploadResponse.UNAUTHORIZED :
+                            case HttpInterceptor.UploadResponse.UNAUTHORIZED:
 
                                 break;
                         }
@@ -100,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        if(sub !=null)
+        if (sub != null)
             sub.unsubscribe();
 
         super.onPause();
@@ -132,14 +123,14 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }*/
 
-    public void refreshListView(int pos){
+    public void refreshListView(int pos) {
         if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
             int positionInListView = pos - listView.getFirstVisiblePosition();
             View v = listView.getChildAt(positionInListView);
             myAdaptor.getItem(pos).setIsDownloaded(true);
             myAdaptor.getView(pos, v, listView);
         } else {
-           // myAdaptor.getItem(pos).setIsDownloaded(true);
+            // myAdaptor.getItem(pos).setIsDownloaded(true);
         }
     }
 
