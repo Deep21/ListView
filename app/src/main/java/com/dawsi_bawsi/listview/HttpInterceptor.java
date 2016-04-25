@@ -26,6 +26,9 @@ public class HttpInterceptor implements Interceptor {
 
     public interface UploadResponse {
         int UNAUTHORIZED = 401;
+        int BADREQUEST = 400;
+        int INSUFFICIENT_STORAGE = 507;
+
         Response onUpload(Chain chain) throws IOException;
     }
 }
