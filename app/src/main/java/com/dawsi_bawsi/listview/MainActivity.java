@@ -74,7 +74,8 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "onNext: doOnNext " + uploadResponse.code());
                         switch (uploadResponse.code()) {
 
-                            case HttpInterceptor.UploadResponse.UNAUTHORIZED :
+
+                            case HttpInterceptor.UploadResponse.UNAUTHORIZED:
                                 AlertDialog.Builder unauthorizedBuilder = new AlertDialog.Builder(MainActivity.this);
                                 unauthorizedBuilder.setTitle("Echec de connexion");
                                 unauthorizedBuilder.setMessage("Votre session à expiré");
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                                 alert11.show();
                                 break;
 
-                            case HttpInterceptor.UploadResponse.BADREQUEST :
+                            case HttpInterceptor.UploadResponse.BADREQUEST:
                                 AlertDialog.Builder badRequestBuilder = new AlertDialog.Builder(MainActivity.this);
                                 badRequestBuilder.setTitle("Echec de connexion");
                                 badRequestBuilder.setMessage("Votre session à expiré");
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                                 alert1.show();
                                 break;
 
-                            case HttpInterceptor.UploadResponse.INSUFFICIENT_STORAGE :
+                            case HttpInterceptor.UploadResponse.INSUFFICIENT_STORAGE:
                                 AlertDialog.Builder STORAGE_Builder = new AlertDialog.Builder(MainActivity.this);
                                 STORAGE_Builder.setTitle("Problème de stockage");
                                 STORAGE_Builder.setMessage("Vous avez atteint la limite de stockage");
