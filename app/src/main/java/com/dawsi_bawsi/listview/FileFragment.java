@@ -122,8 +122,8 @@ public class FileFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(fileAdaptor.getItem(position).getFile().isDirectory()){
-                    mListener.createFolderFragment();
+                if(fileAdaptor.getItem(position).getFile().isDirectory() ){ //&& fileAdaptor.getItem(position).getFile().listFiles().length > 0
+                    mListener.createFolderFragment(fileAdaptor.getItem(position));
                 }
             }
         });
@@ -197,6 +197,6 @@ public class FileFragment extends Fragment {
      */
     public interface OnFolderListener {
         // TODO: Update argument type and name
-        void createFolderFragment();
+        void createFolderFragment(FileModel files);
     }
 }

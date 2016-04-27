@@ -62,7 +62,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         dropboxApi = getRetrofit();
-
         frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
@@ -241,8 +240,8 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
 
 
     @Override
-    public void createFolderFragment() {
+    public void createFolderFragment(FileModel fileModel) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).addToBackStack(null).commit();
+        fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(fileModel), FolderFragment.TAG).addToBackStack(null).commit();
     }
 }

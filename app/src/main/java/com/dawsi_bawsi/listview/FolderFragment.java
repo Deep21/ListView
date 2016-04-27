@@ -31,7 +31,7 @@ public class FolderFragment extends Fragment {
     FolderAdapter folderAdapter;
     ListView listView;
     private File[] files;
-    private String mParam1;
+    private FileModel mParam1;
     private String mParam2;
     private OnFragmentInteractionListener mListener;
 
@@ -46,10 +46,16 @@ public class FolderFragment extends Fragment {
      * @return A new instance of fragment FolderFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static FolderFragment newInstance() {
+    public static FolderFragment newInstance(FileModel fileModel) {
         FolderFragment fragment = new FolderFragment();
         Bundle args = new Bundle();
+        args.putParcelable("filemodel", fileModel);
         fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static FolderFragment newInstance() {
+        FolderFragment fragment = new FolderFragment();
         return fragment;
     }
 
@@ -113,8 +119,8 @@ public class FolderFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            mParam1 = getArguments().getParcelable("filemodel");
+            Log.d(TAG, "onCreate: " + mParam1.getFile().getName());
         }
     }
 
