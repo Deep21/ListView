@@ -1,7 +1,6 @@
 package com.dawsi_bawsi.listview;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -11,21 +10,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FileFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FileFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FileFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -35,7 +25,7 @@ public class FileFragment extends Fragment {
     FileAdaptor fileAdaptor;
     ListView listView;
     // TODO: Rename and change types of parameters
-    private int position;
+    private String path;
     private OnFolderListener mListener;
 
     public FileFragment() {
@@ -95,10 +85,10 @@ public class FileFragment extends Fragment {
      * @return A new instance of fragment FolderFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static FileFragment newInstance(int i) {
+    public static FileFragment newInstance(String path) {
         FileFragment fragment = new FileFragment();
         Bundle args = new Bundle();
-        args.putInt("position", i);
+        args.putString("path", path);
         fragment.setArguments(args);
         return fragment;
     }
@@ -106,32 +96,6 @@ public class FileFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart: " + position);
-        MainActivity mainActivity = (MainActivity) getActivity();
-        String name = mainActivity.getFiles()[position].getName();
-        File[] files = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + mainActivity.getFiles()[position].getName() + "/").listFiles();
-        Log.d(TAG, "onStart: " + name);
-        List<FileModel> fileModels = new ArrayList<>();
-        for(File f : files){
-            Log.d(TAG, "onStart: " + f.getName());
-            FileModel fileModel = new FileModel(f);
-            fileModels.add(fileModel);
-        }
-        fileAdaptor = new FileAdaptor(getContext(), fileModels);
-        listView.setAdapter(fileAdaptor);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(fileAdaptor.getItem(position).getFile().isDirectory()){
-                    mListener.createFolderFragment();
-                }
-            }
-        });
-
-    }
-
-    public void getFiles(int position) {
-        // return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + mainActivity.getFiles()[position].getName() + "/");
     }
 
     public File[] read() {
@@ -156,8 +120,24 @@ public class FileFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            position = getArguments().getInt("position");
-            Toast.makeText(getContext(), "" + listView, Toast.LENGTH_SHORT).show();
+            path = getArguments().getString("path");
+            File[] files = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + path + "/").listFiles();
+            List<FileModel> fileModels = new ArrayList<>();
+            for (File f : files) {
+                Log.d(TAG, "onStart: " + f.getName());
+                FileModel fileModel = new FileModel(f);
+                fileModels.add(fileModel);
+            }
+/*            fileAdaptor = new FileAdaptor(getContext(), fileModels);
+            listView.setAdapter(fileAdaptor);
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    if (fileAdaptor.getItem(position).getFile().isDirectory()) {
+                        mListener.createFolderFragment();
+                    }
+                }
+            });*/
         }
     }
 

@@ -39,16 +39,17 @@ public class FolderFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment FolderFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static FolderFragment newInstance() {
         FolderFragment fragment = new FolderFragment();
         Bundle args = new Bundle();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static FolderFragment newInstance(String path) {
+        FolderFragment fragment = new FolderFragment();
+        Bundle args = new Bundle();
+        args.putString("path", path);
         fragment.setArguments(args);
         return fragment;
     }
@@ -76,11 +77,18 @@ public class FolderFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String name = folderAdapter.getItem(position).getFile().getName();
-                File[] f = getFileByName(name).listFiles();
-                if (f.length > 0) {
+                //Si c'est un dossier
+                if (getFileByName(name).listFiles().length > 0) {
                     if (mListener != null) {
-                        mListener.onFragmentInteraction(position);
+                        Log.d(TAG, "onItemClick: " + "files");
+                        mListener.onCreateFileFragment(name);
                     }
+                }
+                //Si ce n'est pas un dossier
+                else {
+                    Log.d(TAG, "onItemClick: " + "folder");
+
+                    mListener.onCreateFolderFragment(name);
                 }
 
             }
@@ -113,8 +121,7 @@ public class FolderFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            mParam1 = getArguments().getString("path");
         }
     }
 
@@ -154,6 +161,8 @@ public class FolderFragment extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction(int i);
+        void onCreateFolderFragment(String fileName);
+
+        void onCreateFileFragment(String fileName);
     }
 }
