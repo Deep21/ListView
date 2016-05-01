@@ -12,7 +12,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +70,7 @@ public class FolderFragment extends Fragment {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Log.d(TAG, "onItemClick: " + folderAdapter.getItem(position).getFile().getAbsolutePath());
                     File f = new File(folderAdapter.getItem(position).getFile().getAbsolutePath());
-                    if (f.listFiles().length > 0) {
+                    if (f != null && f.listFiles().length > 0) {
                         if (mListener != null) {
                             mListener.onCreateFolderFragment(f.getAbsolutePath());
                         }
@@ -79,9 +78,7 @@ public class FolderFragment extends Fragment {
 
                 }
             });
-        }
-
-        else {
+        } else {
             List<FileModel> fileModels = new ArrayList<>();
             files = read();
             for (File f : files) {
