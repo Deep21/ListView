@@ -11,13 +11,12 @@ class FileModel {
     long size;
     int progress;
     File file;
-    int icone;
     boolean isFile;
     private boolean isDownloaded;
-    public FileModel(String name, long size, int icone) {
+
+    public FileModel(String name, long size) {
         this.filename = name;
         this.size = size;
-        this.icone = icone;
     }
 
     public FileModel(int icone, File f) {
@@ -45,13 +44,6 @@ class FileModel {
         this.file = file;
     }
 
-    public int getIcone() {
-        return icone;
-    }
-
-    public void setIcone(int icone) {
-        this.icone = icone;
-    }
 
     public boolean isDownloaded() {
         return isDownloaded;

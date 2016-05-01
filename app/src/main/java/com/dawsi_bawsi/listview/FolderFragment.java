@@ -12,6 +12,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +29,10 @@ public class FolderFragment extends Fragment {
     public static final String TAG = "FolderFragment";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    FolderAdapter folderAdapter;
+    FileAdapter folderAdapter;
     ListView listView;
     private File[] files;
-    private String mParam1;
+    private String absolutePath;
     private String mParam2;
     private OnFragmentInteractionListener mListener;
 
@@ -41,88 +42,102 @@ public class FolderFragment extends Fragment {
 
     public static FolderFragment newInstance() {
         FolderFragment fragment = new FolderFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
         return fragment;
     }
 
-    public static FolderFragment newInstance(String path) {
+    public static FolderFragment newInstance(String absolutePath) {
         FolderFragment fragment = new FolderFragment();
         Bundle args = new Bundle();
-        args.putString("path", path);
+        args.putString("absolutePath", absolutePath);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    public File[] getFiles() {
-        return files;
-    }
-
-    public void setFiles(File[] files) {
-        this.files = files;
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        List<FileModel> fileModels = new ArrayList<>();
-        files = read();
-        for (File f : files) {
-            FileModel fileModel = new FileModel(f);
-            fileModels.add(fileModel);
-        }
-        folderAdapter = new FolderAdapter(fileModels, getContext());
-        listView.setAdapter(folderAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String name = folderAdapter.getItem(position).getFile().getName();
-                //Si c'est un dossier
-                if (getFileByName(name).listFiles().length > 0) {
-                    if (mListener != null) {
-                        Log.d(TAG, "onItemClick: " + "files");
-                        mListener.onCreateFileFragment(name);
-                    }
-                }
-                //Si ce n'est pas un dossier
-                else {
-                    Log.d(TAG, "onItemClick: " + "folder");
-
-                    mListener.onCreateFolderFragment(name);
-                }
-
+        if (getArguments() != null) {
+            List<FileModel> fileModels = new ArrayList<>();
+            absolutePath = getArguments().getString("absolutePath");
+            File[] files = new File(absolutePath).listFiles();
+            for (File file : files) {
+                FileModel fileModel = new FileModel(file);
+                fileModels.add(fileModel);
             }
-        });
-    }
+            folderAdapter = new FileAdapter(getContext(), fileModels);
+            listView.setAdapter(folderAdapter);
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Log.d(TAG, "onItemClick: " + folderAdapter.getItem(position).getFile().getAbsolutePath());
+                    File f = new File(folderAdapter.getItem(position).getFile().getAbsolutePath());
+                    if (f.listFiles().length > 0) {
+                        if (mListener != null) {
+                            mListener.onCreateFolderFragment(f.getAbsolutePath());
+                        }
+                    }
 
-    public File getFileByName(String fileName) {
-        return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
-    }
-
-    public File[] read() {
-        File[] file = null;
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-            return f.listFiles();
-
-        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
-
-        } else {
-            // Something else is wrong. It may be one of many other states, but all we need
-            //  to know is we can neither read nor write
+                }
+            });
         }
-        return file;
+
+        else {
+            List<FileModel> fileModels = new ArrayList<>();
+            files = read();
+            for (File f : files) {
+                FileModel fileModel = new FileModel(f);
+                fileModels.add(fileModel);
+            }
+            folderAdapter = new FileAdapter(getContext(), fileModels);
+            listView.setAdapter(folderAdapter);
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String absolutePath = folderAdapter.getItem(position).getFile().getAbsolutePath();
+                    if (new File(absolutePath).listFiles().length > 0) {
+                        if (mListener != null) {
+                            // Log.d(TAG, "onItemClick: " + "files");
+                            mListener.onCreateFolderFragment(absolutePath);
+                        }
+                    }
+
+                }
+            });
+        }
+
+
     }
 
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "onActivityCreated: ");
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Log.d(TAG, "onCreate: " + listView);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString("path");
+/*            Log.d(TAG, "onCreate: " + folderAdapter);
+            folderAdapter = new FileAdapter(getContext(),fileModels);
+            listView.setAdapter(folderAdapter);
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String name = folderAdapter.getItem(position).getFile().getName();
+                    if (getFileByName(name).listFiles().length > 0) {
+                        if (mListener != null) {
+                            Log.d(TAG, "onItemClick: " + "files");
+                            mListener.onCreateFolderFragment(name);
+                        }
+                    }
+
+                }
+            });*/
         }
+
+
     }
 
     @Override
@@ -149,6 +164,45 @@ public class FolderFragment extends Fragment {
         mListener = null;
     }
 
+
+    public File getFileByName(String fileName) {
+        return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
+    }
+
+    public File[] read() {
+        File[] file = null;
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
+            return f.listFiles();
+
+        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
+
+        } else {
+            // Something else is wrong. It may be one of many other states, but all we need
+            //  to know is we can neither read nor write
+        }
+        return file;
+    }
+
+    public File[] readByFileName(String fileName) {
+        File[] file = null;
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
+            return f.listFiles();
+
+        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
+
+        } else {
+            // Something else is wrong. It may be one of many other states, but all we need
+            //  to know is we can neither read nor write
+        }
+        return file;
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -165,4 +219,6 @@ public class FolderFragment extends Fragment {
 
         void onCreateFileFragment(String fileName);
     }
+
+
 }

@@ -2,8 +2,6 @@ package com.dawsi_bawsi.listview;
 
 
 import android.os.Bundle;
-import android.os.Environment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -15,7 +13,6 @@ import android.widget.FrameLayout;
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -33,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     private static final String TAG = "MainActivity";
     private static final boolean NOT_UPLOADED = true;
     FrameLayout frameLayout;
-    FileAdaptor fileAdaptor;
+    FileAdapter fileAdapter;
     HttpInterceptor httpInterceptor;
     Subscription sub;
     DropboxApi dropboxApi;
@@ -69,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     private void upload(int position) {
         final int pos = position;
         Gson gson = new Gson();
-        File file = fileAdaptor.getItem(position).getFile();
+        File file = fileAdapter.getItem(position).getFile();
         String path = "/CV/" + file.getName();
         UploadParam uploadParam = new UploadParam();
         uploadParam.setPath(path);
@@ -106,43 +103,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     }
 
 
-    public File[] readFiles() {
-        File[] file = null;
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download/");
-            file = f.listFiles();
-            return file;
-
-        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
-
-        } else {
-            // Something else is wrong. It may be one of many other states, but all we need
-            //  to know is we can neither read nor write
-        }
-        return file;
-    }
-
-
-    public File[] read() {
-        File[] file = null;
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Download");
-            file = f.listFiles();
-            return file;
-
-        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
-
-        } else {
-            // Something else is wrong. It may be one of many other states, but all we need
-            //  to know is we can neither read nor write
-        }
-        return file;
-    }
-
 /*    private void download(final int positionInAdapter) {
         new Thread(new Runnable() {
             @Override
@@ -172,10 +132,10 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
             int positionInListView = pos - listView.getFirstVisiblePosition();
             View v = listView.getChildAt(positionInListView);
-            fileAdaptor.getItem(pos).setIsDownloaded(true);
-            fileAdaptor.getView(pos, v, listView);
+            fileAdapter.getItem(pos).setIsDownloaded(true);
+            fileAdapter.getView(pos, v, listView);
         } else {
-           // fileAdaptor.getItem(pos).setIsDownloaded(true);
+           // fileAdapter.getItem(pos).setIsDownloaded(true);
         }
     }
 
@@ -220,16 +180,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         super.onDestroy();
     }
 
-    public File[] getFiles() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FolderFragment folderFragment = (FolderFragment) fragmentManager.findFragmentByTag(FolderFragment.TAG);
-        if (folderFragment != null) {
-            return folderFragment.getFiles();
-        }
-        return null;
-    }
-
-
 
     @Override
     public void createFolderFragment() {
@@ -238,14 +188,16 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     }
 
     @Override
-    public void onCreateFolderFragment(String fileName) {
+    public void onCreateFolderFragment(String absolutePath) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(fileName), FolderFragment.TAG).addToBackStack(null).commit();
+        fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(absolutePath), FolderFragment.TAG).addToBackStack(null).commit();
+
+
     }
 
     @Override
     public void onCreateFileFragment(String fileName) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, FileFragment.newInstance(fileName), FileFragment.TAG).addToBackStack(null).commit();
+        fragmentTransaction.add(R.id.frame_layout, FileFragment.newInstance(fileName), FileFragment.TAG).addToBackStack(null).commit();
     }
 }

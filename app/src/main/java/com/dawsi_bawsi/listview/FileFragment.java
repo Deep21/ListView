@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.io.File;
@@ -22,7 +21,7 @@ public class FileFragment extends Fragment {
     public static final String TAG = "FileFragment";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    FileAdaptor fileAdaptor;
+    FileAdapter fileAdapter;
     ListView listView;
     // TODO: Rename and change types of parameters
     private String path;
@@ -128,12 +127,12 @@ public class FileFragment extends Fragment {
                 FileModel fileModel = new FileModel(f);
                 fileModels.add(fileModel);
             }
-/*            fileAdaptor = new FileAdaptor(getContext(), fileModels);
-            listView.setAdapter(fileAdaptor);
+/*            fileAdapter = new FileAdapter(getContext(), fileModels);
+            listView.setAdapter(fileAdapter);
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    if (fileAdaptor.getItem(position).getFile().isDirectory()) {
+                    if (fileAdapter.getItem(position).getFile().isDirectory()) {
                         mListener.createFolderFragment();
                     }
                 }
