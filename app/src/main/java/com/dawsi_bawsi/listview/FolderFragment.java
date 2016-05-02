@@ -1,15 +1,18 @@
 package com.dawsi_bawsi.listview;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.google.gson.Gson;
 
@@ -35,6 +38,7 @@ public class FolderFragment extends Fragment {
     public static final String TAG = "FolderFragment";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+    private static final boolean NOT_UPLOADED = true;
     FileAdapter folderAdapter;
     ListView listView;
     Subscription sub;
@@ -68,11 +72,11 @@ public class FolderFragment extends Fragment {
 
     }
 
-    private void upload(int position, String path) {
+    private void fileUpload(int position) {
         final int pos = position;
         Gson gson = new Gson();
         File file = folderAdapter.getItem(position).getFile();
-        String paths = "/CV/" + file.getName();
+        String path = "/CV/" + file.getName();
         UploadParam uploadParam = new UploadParam();
         uploadParam.setPath(path);
         uploadParam.setAutorename(true);
@@ -85,20 +89,39 @@ public class FolderFragment extends Fragment {
             @Override
             public void transferred(long num) {
                 Log.d(TAG, "transferred: " + num);
-                //publishProgress(pos, (int) num);
+                publishProgress(pos, (int) num);
             }
         });
-        sub = ((MainActivity)getActivity()).dropboxApi.uploadImage(requestBody, params)
+        sub = ((MainActivity) getActivity()).dropboxApi.uploadImage(requestBody, params)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<Upload>() {
                     @Override
                     public void call(Upload upload) {
-                        //refreshListView(pos);
+                        refreshListView(pos);
                     }
                 });
     }
 
+    public void refreshListView(int pos) {
+        if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
+            int positionInListView = pos - listView.getFirstVisiblePosition();
+            View v = listView.getChildAt(positionInListView);
+            folderAdapter.getItem(pos).setIsDownloaded(true);
+            folderAdapter.getView(pos, v, listView);
+        } else {
+            // folderAdapter.getItem(pos).setIsDownloaded(true);
+        }
+    }
+
+    public void publishProgress(int position, int progress) {
+        if (position >= listView.getFirstVisiblePosition() && position <= listView.getLastVisiblePosition()) {
+            int positionInListView = position - listView.getFirstVisiblePosition();
+            View v = listView.getChildAt(positionInListView);
+            ProgressBar p = (ProgressBar) v.findViewById(R.id.progressBar);
+            p.setProgress(progress);
+        }
+    }
 
     @Override
     public void onStart() {
@@ -117,6 +140,7 @@ public class FolderFragment extends Fragment {
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    final int pos = position;
                     Log.d(TAG, "onItemClick: " + folderAdapter.getItem(position).getFile().getAbsolutePath());
                     File f = new File(folderAdapter.getItem(position).getFile().getAbsolutePath());
                     //TODO Refactor
@@ -126,8 +150,9 @@ public class FolderFragment extends Fragment {
                         }
                     }
                     // cas d'un fichier
-                    else{
+                    else {
                         Log.d(TAG, "onItemClick: " + "fichier");
+                        fileUpload(pos);
                     }
                     //TODO Refactor
 
@@ -154,27 +179,25 @@ public class FolderFragment extends Fragment {
                             mListener.onCreateFolderFragment(absolutePath);
                         }
                     }
-
                 }
             });
         }
     }
 
     void upload() {
-        /*listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final int pos = position;
-                if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
+                if (folderAdapter.getItem(position).isDownloaded() != NOT_UPLOADED) {
                     int positionInListView = pos - listView.getFirstVisiblePosition();
                     View v = listView.getChildAt(positionInListView);
-                    myAdaptor.getItem(pos).setShowProgressbar(true);
-                    myAdaptor.getView(pos, v, listView);
-                    upload(pos);
+                    folderAdapter.getItem(pos).setShowProgressbar(true);
+                    folderAdapter.getView(pos, v, listView);
+                    //upload(pos);
                 } else {
                     //TODO
-
-                    AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
+                    AlertDialog.Builder builder1 = new AlertDialog.Builder(getContext());
                     builder1.setTitle("Attention !");
                     builder1.setMessage("Voulez vous uploadé ce fichier");
                     builder1.setCancelable(true);
@@ -185,10 +208,10 @@ public class FolderFragment extends Fragment {
                                     if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
                                         int positionInListView = pos - listView.getFirstVisiblePosition();
                                         View v = listView.getChildAt(positionInListView);
-                                        myAdaptor.getItem(pos).setIsDownloaded(false);
-                                        myAdaptor.getView(pos, v, listView);
+                                        folderAdapter.getItem(pos).setIsDownloaded(false);
+                                        folderAdapter.getView(pos, v, listView);
                                     }
-                                    upload(pos);
+                                    // upload(pos);
                                 }
                             });
 
@@ -206,7 +229,7 @@ public class FolderFragment extends Fragment {
 
             }
 
-        });*/
+        });
 
     }
 
@@ -219,28 +242,12 @@ public class FolderFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Log.d(TAG, "onCreate: " + listView);
         if (getArguments() != null) {
-/*            Log.d(TAG, "onCreate: " + folderAdapter);
-            folderAdapter = new FileAdapter(getContext(),fileModels);
-            listView.setAdapter(folderAdapter);
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    String name = folderAdapter.getItem(position).getFile().getName();
-                    if (getFileByName(name).listFiles().length > 0) {
-                        if (mListener != null) {
-                            Log.d(TAG, "onItemClick: " + "files");
-                            mListener.onCreateFolderFragment(name);
-                        }
-                    }
 
-                }
-            });*/
         }
 
-
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

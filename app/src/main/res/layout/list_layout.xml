@@ -4,25 +4,15 @@
     android:layout_height="100dp">
 
     <TextView
-        android:id="@+id/nom"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Text"
-        android:layout_above="@+id/imageView"
-        android:layout_toRightOf="@+id/img"
-        android:layout_toEndOf="@+id/img"
-        android:layout_marginLeft="20dp"
-        android:layout_marginStart="20dp" />
-
-    <TextView
         android:id="@+id/title2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Large Text"
-        android:layout_below="@+id/nom"
-        android:layout_alignLeft="@+id/nom"
-        android:layout_alignStart="@+id/nom" />
-
+        android:layout_marginLeft="13dp"
+        android:layout_marginStart="13dp"
+        android:layout_alignTop="@+id/img"
+        android:layout_toRightOf="@+id/img"
+        android:layout_toEndOf="@+id/img" />
 
     <ImageView
         android:focusable="false"
@@ -31,41 +21,33 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:src="@drawable/document"
-        android:layout_alignTop="@+id/nom"
+        android:layout_marginLeft="18dp"
+        android:layout_marginStart="18dp"
+        android:layout_alignTop="@+id/done"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginLeft="24dp"
-        android:layout_marginStart="24dp" />
+        android:layout_alignParentStart="true" />
 
     <ProgressBar
         android:id="@+id/progressBar"
-        android:visibility="gone"
+        android:visibility="visible"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/imageView"
-        android:layout_alignLeft="@+id/img"
-        android:layout_alignStart="@+id/img"
-        android:indeterminate="false" />
+        android:indeterminate="false"
+        android:layout_alignBottom="@+id/img"
+        android:layout_alignLeft="@+id/title2"
+        android:layout_alignStart="@+id/title2" />
 
     <ImageView
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:id="@+id/done"
         android:src="@drawable/right"
-        android:layout_marginRight="25dp"
-        android:layout_marginEnd="25dp"
-        android:layout_centerVertical="true"
+        android:layout_marginRight="18dp"
+        android:layout_marginEnd="18dp"
+        android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
-
-    <ImageView
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:id="@+id/imageView"
-        android:src="@drawable/upload"
-        android:layout_alignTop="@+id/done"
-        android:layout_toLeftOf="@+id/done"
-        android:layout_toStartOf="@+id/done" />
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="20dp" />
 
 </RelativeLayout>

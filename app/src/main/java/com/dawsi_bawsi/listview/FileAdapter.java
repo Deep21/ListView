@@ -19,6 +19,8 @@ public class FileAdapter extends BaseAdapter {
     private static final String TAG = "FileAdapter";
     List<FileModel> persons;
     Context context;
+    public static final int FILE_VIEW = 0;
+    public static final int FOLDER_VIEW = 1;
 
     public FileAdapter(Context context, List<FileModel> objects) {
         this.persons = objects;
@@ -52,14 +54,12 @@ public class FileAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder viewHolder;
-
         if (convertView == null) {
             viewHolder = new ViewHolder();
-
             switch (getItemViewType(position)){
 
                 case 0:
-                    Log.d(TAG, "getView: " + "folder");
+                    Log.d(TAG, "getView: " + "File viewtype");
                     LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     convertView = inflater.inflate(R.layout.list_layout, parent, false);
                     viewHolder.progressBar = (ProgressBar) convertView.findViewById(R.id.progressBar);
@@ -70,7 +70,7 @@ public class FileAdapter extends BaseAdapter {
                     break;
 
                 case 1:
-                    Log.d(TAG, "getView: " + "folder");
+                    Log.d(TAG, "getView: " + "folder viewtype");
                     LayoutInflater folderInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     convertView = folderInflater.inflate(R.layout.list_layout_folder, parent, false);
                     viewHolder.nom = (TextView) convertView.findViewById(R.id.nom);
@@ -81,39 +81,40 @@ public class FileAdapter extends BaseAdapter {
 
         }
         viewHolder = (ViewHolder) convertView.getTag();
-        //viewHolder.fileTypeIcone.setImageResource((getItem(position).isFile) ?  R.drawable.document : R.drawable.folder);
-        //Upload non uploadé
-        //On initialise les vues par défaut
 
-        if(getItemViewType(position) == 0){
-            Log.d(TAG, "getView: " + "file");
+
+
+        if(getItemViewType(position) == FILE_VIEW){
+
+            viewHolder.done.setImageResource(R.drawable.upload);
+
+            //On initialise les vues par défaut
             if(getItem(position).isShowProgressbar()){
-                viewHolder.progressBar.setVisibility(View.VISIBLE);//on cache le progressbar
+                viewHolder.progressBar.setVisibility(View.VISIBLE);
             }
 
             if (getItem(position).isDownloaded() != true) {
-                viewHolder.progressBar.setProgress(getItem(position).progress);
+                viewHolder.progressBar.setProgress(0);
                 viewHolder.txt1.setText(getItem(position).getFile().getName());
-                viewHolder.done.setVisibility(View.INVISIBLE);
-
-            }//Upload terminé
+                //viewHolder.done.setVisibility(View.INVISIBLE);
+            }
+            //Upload terminé
             else if (getItem(position).isDownloaded()) {
-                //viewHolder.progressBar.setProgress(getItem(position).progress);
                 viewHolder.progressBar.setVisibility(View.GONE);
+                viewHolder.done.setImageResource(R.drawable.right);
                 viewHolder.done.setVisibility(View.VISIBLE);
 
             }
         }
-        else if(getItemViewType(position) == 1){
+        else if(getItemViewType(position) == FOLDER_VIEW){
             Log.d(TAG, "getView: " + "folder");
             viewHolder = (ViewHolder) convertView.getTag();
             viewHolder.nom.setText(getItem(position).getFile().getName());
         }
 
-
-
         return convertView;
     }
+
 
     @Override
     public int getItemViewType(int position) {
@@ -133,7 +134,6 @@ public class FileAdapter extends BaseAdapter {
 
     class ViewHolder {
         TextView txt1;
-        TextView txt2;
         ImageView fileTypeIcone;
         ImageView done;
         ProgressBar progressBar;
