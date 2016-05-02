@@ -5,7 +5,7 @@ import java.io.File;
 /**
  * Created by Spartiate on 11/03/2016.
  */
-class FileModel {
+class FileModel{
     boolean showProgressbar;
     String filename;
     long size;
@@ -14,6 +14,7 @@ class FileModel {
     boolean isFile;
     private boolean isDownloaded;
 
+
     public FileModel(String name, long size) {
         this.filename = name;
         this.size = size;
@@ -21,7 +22,6 @@ class FileModel {
 
     public FileModel(int icone, File f) {
     }
-
 
     public FileModel(File f) {
         this.file = f;
@@ -52,6 +52,5 @@ class FileModel {
     public void setIsDownloaded(boolean isDownloaded) {
         this.isDownloaded = isDownloaded;
     }
-
 
 }

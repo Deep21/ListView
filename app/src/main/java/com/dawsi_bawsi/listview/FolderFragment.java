@@ -44,6 +44,7 @@ public class FolderFragment extends Fragment {
     Subscription sub;
     private File[] files;
     private String absolutePath;
+    private FileModel mParam1;
     private String mParam2;
     private OnFragmentInteractionListener mListener;
 
@@ -51,10 +52,6 @@ public class FolderFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static FolderFragment newInstance() {
-        FolderFragment fragment = new FolderFragment();
-        return fragment;
-    }
 
     public static FolderFragment newInstance(String absolutePath) {
         FolderFragment fragment = new FolderFragment();
@@ -64,12 +61,16 @@ public class FolderFragment extends Fragment {
         return fragment;
     }
 
+    public static FolderFragment newInstance() {
+        FolderFragment fragment = new FolderFragment();
+        return fragment;
+    }
+
     @Override
     public void onDestroy() {
         if (sub != null)
             sub.unsubscribe();
         super.onDestroy();
-
     }
 
     private void fileUpload(int position) {
@@ -126,8 +127,9 @@ public class FolderFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        //premier lancement
+        //deuxième lancement
         if (getArguments() != null) {
+            Log.d(TAG, "onItemClick: " + "second lancement");
             List<FileModel> fileModels = new ArrayList<>();
             absolutePath = getArguments().getString("absolutePath");
             File[] files = new File(absolutePath).listFiles();
@@ -144,13 +146,13 @@ public class FolderFragment extends Fragment {
                     Log.d(TAG, "onItemClick: " + folderAdapter.getItem(position).getFile().getAbsolutePath());
                     File f = new File(folderAdapter.getItem(position).getFile().getAbsolutePath());
                     //TODO Refactor
-                    if (f.isFile() != true && f.listFiles().length > 0) {
+                    if (f.isDirectory() && f.listFiles().length > 0) {
                         if (mListener != null) {
                             mListener.onCreateFolderFragment(f.getAbsolutePath());
                         }
                     }
                     // cas d'un fichier
-                    else {
+                    else if(f.isFile()) {
                         Log.d(TAG, "onItemClick: " + "fichier");
                         fileUpload(pos);
                     }
@@ -160,8 +162,9 @@ public class FolderFragment extends Fragment {
                 }
             });
         }
-        //deuxième lancement
+        //premier lancement
         else {
+            Log.d(TAG, "onItemClick: " + "1er lancement");
             List<FileModel> fileModels = new ArrayList<>();
             files = read();
             for (File f : files) {
@@ -174,7 +177,8 @@ public class FolderFragment extends Fragment {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     String absolutePath = folderAdapter.getItem(position).getFile().getAbsolutePath();
-                    if (new File(absolutePath).listFiles().length > 0) {
+                    File f = new File(absolutePath);
+                    if (f.isDirectory() && f.listFiles().length > 0) {
                         if (mListener != null) {
                             mListener.onCreateFolderFragment(absolutePath);
                         }
@@ -243,7 +247,6 @@ public class FolderFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-
         }
 
     }
