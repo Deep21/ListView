@@ -24,7 +24,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity implements FolderFragment.OnFragmentInteractionListener, FileFragment.OnFolderListener {
+public class MainActivity extends AppCompatActivity implements FolderFragment.OnFragmentInteractionListener{
     public static final String BASE_URL = "https://content.dropboxapi.com/";
     public static final int FINISH = 100;
     private static final String TAG = "MainActivity";
@@ -180,17 +180,10 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         super.onDestroy();
     }
 
-
-    @Override
-    public void createFolderFragment() {
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).addToBackStack(null).commit();
-    }
-
     @Override
     public void onCreateFolderFragment(String absolutePath) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(absolutePath), FolderFragment.TAG).addToBackStack(null).commit();
-    }
 
+    }
 }

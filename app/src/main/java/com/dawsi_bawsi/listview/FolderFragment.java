@@ -44,6 +44,7 @@ public class FolderFragment extends Fragment {
     Subscription sub;
     private File[] files;
     private String absolutePath;
+    private FileModel mParam1;
     private String mParam2;
     private OnFragmentInteractionListener mListener;
 
@@ -51,10 +52,6 @@ public class FolderFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static FolderFragment newInstance() {
-        FolderFragment fragment = new FolderFragment();
-        return fragment;
-    }
 
     public static FolderFragment newInstance(String absolutePath) {
         FolderFragment fragment = new FolderFragment();
@@ -64,12 +61,16 @@ public class FolderFragment extends Fragment {
         return fragment;
     }
 
+    public static FolderFragment newInstance() {
+        FolderFragment fragment = new FolderFragment();
+        return fragment;
+    }
+
     @Override
     public void onDestroy() {
         if (sub != null)
             sub.unsubscribe();
         super.onDestroy();
-
     }
 
     private void fileUpload(int position) {
@@ -243,7 +244,6 @@ public class FolderFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-
         }
 
     }
