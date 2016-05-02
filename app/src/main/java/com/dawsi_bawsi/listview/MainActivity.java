@@ -191,13 +191,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     public void onCreateFolderFragment(String absolutePath) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(absolutePath), FolderFragment.TAG).addToBackStack(null).commit();
-
-
     }
 
-    @Override
-    public void onCreateFileFragment(String fileName) {
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.frame_layout, FileFragment.newInstance(fileName), FileFragment.TAG).addToBackStack(null).commit();
-    }
 }

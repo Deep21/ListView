@@ -11,9 +11,16 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 
 /**
@@ -30,6 +37,7 @@ public class FolderFragment extends Fragment {
     private static final String ARG_PARAM2 = "param2";
     FileAdapter folderAdapter;
     ListView listView;
+    Subscription sub;
     private File[] files;
     private String absolutePath;
     private String mParam2;
@@ -53,8 +61,49 @@ public class FolderFragment extends Fragment {
     }
 
     @Override
+    public void onDestroy() {
+        if (sub != null)
+            sub.unsubscribe();
+        super.onDestroy();
+
+    }
+
+    private void upload(int position, String path) {
+        final int pos = position;
+        Gson gson = new Gson();
+        File file = folderAdapter.getItem(position).getFile();
+        String paths = "/CV/" + file.getName();
+        UploadParam uploadParam = new UploadParam();
+        uploadParam.setPath(path);
+        uploadParam.setAutorename(true);
+        uploadParam.setMute(false);
+        Mode mode = new Mode();
+        mode.setTag("add");
+        uploadParam.setMode(mode);
+        String params = gson.toJson(uploadParam);
+        ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+            @Override
+            public void transferred(long num) {
+                Log.d(TAG, "transferred: " + num);
+                //publishProgress(pos, (int) num);
+            }
+        });
+        sub = ((MainActivity)getActivity()).dropboxApi.uploadImage(requestBody, params)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Upload>() {
+                    @Override
+                    public void call(Upload upload) {
+                        //refreshListView(pos);
+                    }
+                });
+    }
+
+
+    @Override
     public void onStart() {
         super.onStart();
+        //premier lancement
         if (getArguments() != null) {
             List<FileModel> fileModels = new ArrayList<>();
             absolutePath = getArguments().getString("absolutePath");
@@ -70,15 +119,24 @@ public class FolderFragment extends Fragment {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Log.d(TAG, "onItemClick: " + folderAdapter.getItem(position).getFile().getAbsolutePath());
                     File f = new File(folderAdapter.getItem(position).getFile().getAbsolutePath());
-                    if (f != null && f.listFiles().length > 0) {
+                    //TODO Refactor
+                    if (f.isFile() != true && f.listFiles().length > 0) {
                         if (mListener != null) {
                             mListener.onCreateFolderFragment(f.getAbsolutePath());
                         }
                     }
+                    // cas d'un fichier
+                    else{
+                        Log.d(TAG, "onItemClick: " + "fichier");
+                    }
+                    //TODO Refactor
+
 
                 }
             });
-        } else {
+        }
+        //deuxième lancement
+        else {
             List<FileModel> fileModels = new ArrayList<>();
             files = read();
             for (File f : files) {
@@ -93,7 +151,6 @@ public class FolderFragment extends Fragment {
                     String absolutePath = folderAdapter.getItem(position).getFile().getAbsolutePath();
                     if (new File(absolutePath).listFiles().length > 0) {
                         if (mListener != null) {
-                            // Log.d(TAG, "onItemClick: " + "files");
                             mListener.onCreateFolderFragment(absolutePath);
                         }
                     }
@@ -101,7 +158,55 @@ public class FolderFragment extends Fragment {
                 }
             });
         }
+    }
 
+    void upload() {
+        /*listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final int pos = position;
+                if (myAdaptor.getItem(position).isDownloaded() != NOT_UPLOADED) {
+                    int positionInListView = pos - listView.getFirstVisiblePosition();
+                    View v = listView.getChildAt(positionInListView);
+                    myAdaptor.getItem(pos).setShowProgressbar(true);
+                    myAdaptor.getView(pos, v, listView);
+                    upload(pos);
+                } else {
+                    //TODO
+
+                    AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
+                    builder1.setTitle("Attention !");
+                    builder1.setMessage("Voulez vous uploadé ce fichier");
+                    builder1.setCancelable(true);
+                    builder1.setPositiveButton(
+                            "Oui",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
+                                        int positionInListView = pos - listView.getFirstVisiblePosition();
+                                        View v = listView.getChildAt(positionInListView);
+                                        myAdaptor.getItem(pos).setIsDownloaded(false);
+                                        myAdaptor.getView(pos, v, listView);
+                                    }
+                                    upload(pos);
+                                }
+                            });
+
+                    builder1.setNegativeButton(
+                            "Non",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                }
+                            });
+
+                    AlertDialog alert11 = builder1.create();
+                    alert11.show();
+                }
+
+            }
+
+        });*/
 
     }
 
@@ -162,10 +267,6 @@ public class FolderFragment extends Fragment {
     }
 
 
-    public File getFileByName(String fileName) {
-        return new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
-    }
-
     public File[] read() {
         File[] file = null;
         String state = Environment.getExternalStorageState();
@@ -183,22 +284,6 @@ public class FolderFragment extends Fragment {
         return file;
     }
 
-    public File[] readByFileName(String fileName) {
-        File[] file = null;
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName + "/");
-            return f.listFiles();
-
-        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            Log.d(TAG, "onOptionsItemSelected: " + "can  read");
-
-        } else {
-            // Something else is wrong. It may be one of many other states, but all we need
-            //  to know is we can neither read nor write
-        }
-        return file;
-    }
 
     /**
      * This interface must be implemented by activities that contain this
@@ -214,7 +299,6 @@ public class FolderFragment extends Fragment {
         // TODO: Update argument type and name
         void onCreateFolderFragment(String fileName);
 
-        void onCreateFileFragment(String fileName);
     }
 
 
