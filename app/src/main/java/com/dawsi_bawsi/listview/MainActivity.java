@@ -19,9 +19,11 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
+import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
@@ -68,46 +70,11 @@ public class MainActivity extends AppCompatActivity {
         sub = dropboxApi.testCaseStorageQuota507()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new Action1<Response<Upload>>() {
-                    @Override
-                    public void call(Response<Upload> uploadResponse) {
-                        Log.d(TAG, "onNext: doOnNext " + uploadResponse.code());
-                        switch (uploadResponse.code()) {
-
-
-                            case HttpInterceptor.UploadResponse.UNAUTHORIZED:
-                                AlertDialog.Builder unauthorizedBuilder = new AlertDialog.Builder(MainActivity.this);
-                                unauthorizedBuilder.setTitle("Echec de connexion");
-                                unauthorizedBuilder.setMessage("Votre session à expiré");
-                                unauthorizedBuilder.setCancelable(true);
-                                AlertDialog alert11 = unauthorizedBuilder.create();
-                                alert11.show();
-                                break;
-
-                            case HttpInterceptor.UploadResponse.BADREQUEST:
-                                AlertDialog.Builder badRequestBuilder = new AlertDialog.Builder(MainActivity.this);
-                                badRequestBuilder.setTitle("Echec de connexion");
-                                badRequestBuilder.setMessage("Votre session à expiré");
-                                badRequestBuilder.setCancelable(true);
-                                AlertDialog alert1 = badRequestBuilder.create();
-                                alert1.show();
-                                break;
-
-                            case HttpInterceptor.UploadResponse.INSUFFICIENT_STORAGE:
-                                AlertDialog.Builder STORAGE_Builder = new AlertDialog.Builder(MainActivity.this);
-                                STORAGE_Builder.setTitle("Problème de stockage");
-                                STORAGE_Builder.setMessage("Vous avez atteint la limite de stockage");
-                                STORAGE_Builder.setCancelable(true);
-                                AlertDialog storage = STORAGE_Builder.create();
-                                storage.show();
-                                break;
-                        }
-                    }
-                })
+                .doOnNext(new ErrorAction(MainActivity.this))
                 .subscribe(new Action1<Response<Upload>>() {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
-
+                        Log.d(TAG, "call: " + uploadResponse.code());
                     }
                 });
     }
