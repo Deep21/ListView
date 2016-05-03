@@ -129,7 +129,6 @@ public class FolderFragment extends Fragment {
         super.onStart();
         //deuxième lancement
         if (getArguments() != null) {
-            Log.d(TAG, "onItemClick: " + "second lancement");
             List<FileModel> fileModels = new ArrayList<>();
             absolutePath = getArguments().getString("absolutePath");
             File[] files = new File(absolutePath).listFiles();
@@ -143,7 +142,6 @@ public class FolderFragment extends Fragment {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     final int pos = position;
-                    Log.d(TAG, "onItemClick: " + folderAdapter.getItem(position).getFile().getAbsolutePath());
                     File f = new File(folderAdapter.getItem(position).getFile().getAbsolutePath());
                     //TODO Refactor
                     if (f.isDirectory() && f.listFiles().length > 0) {
@@ -153,7 +151,6 @@ public class FolderFragment extends Fragment {
                     }
                     // cas d'un fichier
                     else if(f.isFile()) {
-                        Log.d(TAG, "onItemClick: " + "fichier");
                         fileUpload(pos);
                     }
                     //TODO Refactor
@@ -164,7 +161,6 @@ public class FolderFragment extends Fragment {
         }
         //premier lancement
         else {
-            Log.d(TAG, "onItemClick: " + "1er lancement");
             List<FileModel> fileModels = new ArrayList<>();
             files = read();
             for (File f : files) {
@@ -178,6 +174,7 @@ public class FolderFragment extends Fragment {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     String absolutePath = folderAdapter.getItem(position).getFile().getAbsolutePath();
                     File f = new File(absolutePath);
+                    //Je vérifie si c'est un dossier et que ce dossier contient des fichiers
                     if (f.isDirectory() && f.listFiles().length > 0) {
                         if (mListener != null) {
                             mListener.onCreateFolderFragment(absolutePath);
