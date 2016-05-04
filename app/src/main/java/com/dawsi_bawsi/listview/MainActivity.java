@@ -128,26 +128,7 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         }).start();
     }*/
 
-/*    public void refreshListView(int pos){
-        if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-            int positionInListView = pos - listView.getFirstVisiblePosition();
-            View v = listView.getChildAt(positionInListView);
-            fileAdapter.getItem(pos).setIsDownloaded(true);
-            fileAdapter.getView(pos, v, listView);
-        } else {
-           // fileAdapter.getItem(pos).setIsDownloaded(true);
-        }
-    }
 
-    public void publishProgress(int position, int progress) {
-        if (position >= listView.getFirstVisiblePosition() && position <= listView.getLastVisiblePosition()) {
-            int positionInListView = position - listView.getFirstVisiblePosition();
-            View v = listView.getChildAt(positionInListView);
-            ProgressBar p = (ProgressBar) v.findViewById(R.id.progressBar);
-            p.setProgress(progress);
-
-        }
-    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
