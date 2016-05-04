@@ -5,24 +5,15 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
-
-import com.google.gson.Gson;
-
-import java.io.File;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements FolderFragment.OnFragmentInteractionListener{
     public static final String BASE_URL = "https://content.dropboxapi.com/";
@@ -32,7 +23,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     FrameLayout frameLayout;
     FileAdapter fileAdapter;
     HttpInterceptor httpInterceptor;
-    Subscription sub;
     DropboxApi dropboxApi;
 
     public DropboxApi getRetrofit() {
@@ -61,45 +51,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
-    }
-
-    private void upload(int position) {
-        final int pos = position;
-        Gson gson = new Gson();
-        File file = fileAdapter.getItem(position).getFile();
-        String path = "/CV/" + file.getName();
-        UploadParam uploadParam = new UploadParam();
-        uploadParam.setPath(path);
-        uploadParam.setAutorename(true);
-        uploadParam.setMute(false);
-        Mode mode = new Mode();
-        mode.setTag("add");
-        uploadParam.setMode(mode);
-        String params = gson.toJson(uploadParam);
-        ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-            @Override
-            public void transferred(long num) {
-                Log.d(TAG, "transferred: " + num);
-                //publishProgress(pos, (int) num);
-            }
-        });
-        sub = dropboxApi.uploadImage(requestBody, params)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Upload>() {
-                    @Override
-                    public void call(Upload upload) {
-                        //refreshListView(pos);
-                    }
-                });
-    }
-
-    @Override
-    protected void onPause() {
-        if (sub != null)
-            sub.unsubscribe();
-
-        super.onPause();
     }
 
 
@@ -153,13 +104,6 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onDestroy() {
-        if (sub != null) {
-            sub.unsubscribe();
-        }
-        super.onDestroy();
-    }
 
     @Override
     public void onCreateFolderFragment(String absolutePath) {

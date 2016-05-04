@@ -1,5 +1,7 @@
 package com.dawsi_bawsi.listview;
 
+import retrofit2.Response;
+import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Multipart;
@@ -19,5 +21,7 @@ public interface DropboxApi {
     })
 
     @POST("2/files/upload")
-    Observable<Upload> uploadImage(@Part("hello\"; filename=\"hello.txt\" ") ProgressFileRequestBody file, @Header("Dropbox-API-Arg") String fileUploadParam);
+    Observable<Response<Upload>> uploadImage(@Part("hello\"; filename=\"hello.txt\" ") ProgressFileRequestBody file, @Header("Dropbox-API-Arg") String fileUploadParam);
+
+
 }

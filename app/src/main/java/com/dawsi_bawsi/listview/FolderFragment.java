@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Response;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -67,10 +68,26 @@ public class FolderFragment extends Fragment {
     }
 
     @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.d(TAG, "onDestroyView: ");
+
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState: ");
+    }
+
+
+    @Override
     public void onDestroy() {
         if (sub != null)
             sub.unsubscribe();
         super.onDestroy();
+        Log.d(TAG, "onDestroy: ");
     }
 
     private void fileUpload(int position) {
@@ -96,9 +113,10 @@ public class FolderFragment extends Fragment {
         sub = ((MainActivity) getActivity()).dropboxApi.uploadImage(requestBody, params)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Upload>() {
+                .doOnNext(new ErrorAction(getContext()))
+                .subscribe(new Action1<Response<Upload>>() {
                     @Override
-                    public void call(Upload upload) {
+                    public void call(Response<Upload> uploadResponse) {
                         refreshListView(pos);
                     }
                 });
@@ -127,6 +145,7 @@ public class FolderFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart: ");
         //deuxième lancement
         if (getArguments() != null) {
             List<FileModel> fileModels = new ArrayList<>();
@@ -243,6 +262,7 @@ public class FolderFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: ");
         if (getArguments() != null) {
         }
 
@@ -253,6 +273,7 @@ public class FolderFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_folder, container, false);
         listView = (ListView) v.findViewById(R.id.listView);
+        Log.d(TAG, "onCreateView: " + savedInstanceState);
         return v;
     }
 
