@@ -45,14 +45,10 @@ public class FolderFragment extends Fragment {
     Subscription sub;
     private File[] files;
     private String absolutePath;
-    private FileModel mParam1;
-    private String mParam2;
     private OnFragmentInteractionListener mListener;
 
     public FolderFragment() {
-        // Required empty public constructor
     }
-
 
     public static FolderFragment newInstance(String absolutePath) {
         FolderFragment fragment = new FolderFragment();
@@ -69,16 +65,15 @@ public class FolderFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        Log.d(TAG, "onDestroyView: " + "on destroy");
         super.onDestroyView();
-        Log.d(TAG, "onDestroyView: ");
-
-
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
         Log.d(TAG, "onSaveInstanceState: ");
+        super.onSaveInstanceState(outState);
+
     }
 
 
@@ -128,8 +123,6 @@ public class FolderFragment extends Fragment {
             View v = listView.getChildAt(positionInListView);
             folderAdapter.getItem(pos).setIsDownloaded(true);
             folderAdapter.getView(pos, v, listView);
-        } else {
-            // folderAdapter.getItem(pos).setIsDownloaded(true);
         }
     }
 

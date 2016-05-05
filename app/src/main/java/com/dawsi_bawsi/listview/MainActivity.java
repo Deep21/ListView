@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
@@ -17,11 +18,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity implements FolderFragment.OnFragmentInteractionListener{
     public static final String BASE_URL = "https://content.dropboxapi.com/";
-    public static final int FINISH = 100;
     private static final String TAG = "MainActivity";
     private static final boolean NOT_UPLOADED = true;
     FrameLayout frameLayout;
-    FileAdapter fileAdapter;
     HttpInterceptor httpInterceptor;
     DropboxApi dropboxApi;
 
@@ -53,33 +52,11 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
     }
 
-
-/*    private void download(final int positionInAdapter) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 1; i < 100; i++) {
-                    final int progress = i;
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            publishProgress(positionInAdapter, progress);
-                        }
-                    });
-                    System.out.println(i);
-                    SystemClock.sleep(10);
-                }
-                Bundle bundle = new Bundle();
-                Message message = handler.obtainMessage();
-                bundle.putInt("position", positionInAdapter);
-                message.setData(bundle);
-                handler.sendMessage(message);
-
-            }
-        }).start();
-    }*/
-
-
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState: ");
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
