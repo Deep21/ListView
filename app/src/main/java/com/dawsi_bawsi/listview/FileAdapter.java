@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -58,19 +59,19 @@ public class FileAdapter extends BaseAdapter {
             viewHolder = new ViewHolder();
             switch (getItemViewType(position)){
 
-                case 0:
-                    Log.d(TAG, "getView: " + "File viewtype");
+                case FILE_VIEW:
                     LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     convertView = inflater.inflate(R.layout.list_layout, parent, false);
                     viewHolder.progressBar = (ProgressBar) convertView.findViewById(R.id.progressBar);
                     viewHolder.txt1 = (TextView) convertView.findViewById(R.id.title2);
                     viewHolder.done = (ImageView) convertView.findViewById(R.id.done);
                     viewHolder.fileTypeIcone = (ImageView) convertView.findViewById(R.id.img);
+                    viewHolder.checkBox = (CheckBox) convertView.findViewById(R.id.checkBox1);
                     convertView.setTag(viewHolder);
                     break;
 
-                case 1:
-                    Log.d(TAG, "getView: " + "folder viewtype");
+
+                case FOLDER_VIEW:
                     LayoutInflater folderInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     convertView = folderInflater.inflate(R.layout.list_layout_folder, parent, false);
                     viewHolder.nom = (TextView) convertView.findViewById(R.id.nom);
@@ -82,12 +83,9 @@ public class FileAdapter extends BaseAdapter {
         }
         viewHolder = (ViewHolder) convertView.getTag();
 
-
-
         if(getItemViewType(position) == FILE_VIEW){
 
             viewHolder.done.setImageResource(R.drawable.upload);
-
             //On initialise les vues par défaut
             if(getItem(position).isShowProgressbar()){
                 viewHolder.progressBar.setVisibility(View.VISIBLE);
@@ -105,9 +103,12 @@ public class FileAdapter extends BaseAdapter {
                 viewHolder.done.setVisibility(View.VISIBLE);
 
             }
+
+            //TODO
+            //Ajout de tableau ds le adaptor pour multi upload
+            //puis a lexterieur de ladaptor récupérer la liste et uploader
         }
         else if(getItemViewType(position) == FOLDER_VIEW){
-            Log.d(TAG, "getView: " + "folder");
             viewHolder = (ViewHolder) convertView.getTag();
             viewHolder.nom.setText(getItem(position).getFile().getName());
         }
@@ -119,10 +120,10 @@ public class FileAdapter extends BaseAdapter {
     @Override
     public int getItemViewType(int position) {
         if(getItem(position).isFile){
-            return 0;
+            return FILE_VIEW;
         }
-        if(getItem(position).getFile().isDirectory()){
-            return 1;
+        else if(getItem(position).getFile().isDirectory()){
+            return FOLDER_VIEW;
         }
         return super.getItemViewType(position);
     }
@@ -139,6 +140,7 @@ public class FileAdapter extends BaseAdapter {
         ProgressBar progressBar;
         TextView nom;
         ImageView folderTypeIcone;
+        CheckBox checkBox;
 
     }
 

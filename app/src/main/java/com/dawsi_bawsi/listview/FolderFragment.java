@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 
 import retrofit2.Response;
 import rx.Subscription;
@@ -27,14 +28,6 @@ import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FolderFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FolderFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FolderFragment extends Fragment {
     public static final String TAG = "FolderFragment";
     private static final String ARG_PARAM1 = "param1";
@@ -76,7 +69,6 @@ public class FolderFragment extends Fragment {
 
     }
 
-
     @Override
     public void onDestroy() {
         if (sub != null)
@@ -105,7 +97,8 @@ public class FolderFragment extends Fragment {
                 publishProgress(pos, (int) num);
             }
         });
-        sub = ((MainActivity) getActivity()).dropboxApi.uploadImage(requestBody, params)
+        //concatUpload(position);
+/*        sub = ((MainActivity) getActivity()).dropboxApi.uploadImage(requestBody, params)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new ErrorAction(getContext()))
@@ -113,6 +106,39 @@ public class FolderFragment extends Fragment {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
                         refreshListView(pos);
+                    }
+                });*/
+    }
+
+    public void concatUpload(int position){
+        final int pos = position;
+        Gson gson = new Gson();
+        File file = folderAdapter.getItem(position).getFile();
+        String path = "/CV/" + file.getName();
+        UploadParam uploadParam = new UploadParam();
+        uploadParam.setPath(path);
+        uploadParam.setAutorename(true);
+        uploadParam.setMute(false);
+        Mode mode = new Mode();
+        mode.setTag("add");
+        uploadParam.setMode(mode);
+        String params = gson.toJson(uploadParam);
+        ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+            @Override
+            public void transferred(long num) {
+                Log.d(TAG, "transferred: " + num);
+                //publishProgress(pos, (int) num);
+            }
+        });
+        DropboxApi dropboxapi =  ((MainActivity) getActivity()).dropboxApi;
+        sub = rx.Observable.concat(dropboxapi.uploadImage(requestBody, params), dropboxapi.uploadImage(requestBody, params)).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new ErrorAction(getContext()))
+                .subscribe(new Action1<Response<Upload>>() {
+                    @Override
+                    public void call(Response<Upload> uploadResponse) {
+                        Log.d(TAG, "call: " + uploadResponse);
+                        //refreshListView(pos);
                     }
                 });
     }
@@ -162,8 +188,40 @@ public class FolderFragment extends Fragment {
                         }
                     }
                     // cas d'un fichier
-                    else if(f.isFile()) {
-                        fileUpload(pos);
+                    else if (f.isFile()) {
+                        if (folderAdapter.getItem(position).isDownloaded() != NOT_UPLOADED) {
+                            fileUpload(pos);
+                        } else {
+                            AlertDialog.Builder builder1 = new AlertDialog.Builder(getContext());
+                            builder1.setTitle("Attention !");
+                            builder1.setMessage("Vous venez d'uploadé le même fichier, Voulez vous recommencez ?");
+                            builder1.setCancelable(true);
+                            builder1.setPositiveButton(
+                                    "Oui",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
+                                                int positionInListView = pos - listView.getFirstVisiblePosition();
+                                                View v = listView.getChildAt(positionInListView);
+                                                folderAdapter.getItem(pos).setIsDownloaded(false);
+                                                folderAdapter.getView(pos, v, listView);
+                                            }
+                                            // upload(pos);
+                                        }
+                                    });
+
+                            builder1.setNegativeButton(
+                                    "Non",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.cancel();
+                                        }
+                                    });
+
+                            AlertDialog alert11 = builder1.create();
+                            alert11.show();
+                        }
+
                     }
                     //TODO Refactor
 
@@ -197,54 +255,6 @@ public class FolderFragment extends Fragment {
         }
     }
 
-    void upload() {
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final int pos = position;
-                if (folderAdapter.getItem(position).isDownloaded() != NOT_UPLOADED) {
-                    int positionInListView = pos - listView.getFirstVisiblePosition();
-                    View v = listView.getChildAt(positionInListView);
-                    folderAdapter.getItem(pos).setShowProgressbar(true);
-                    folderAdapter.getView(pos, v, listView);
-                    //upload(pos);
-                } else {
-                    //TODO
-                    AlertDialog.Builder builder1 = new AlertDialog.Builder(getContext());
-                    builder1.setTitle("Attention !");
-                    builder1.setMessage("Voulez vous uploadé ce fichier");
-                    builder1.setCancelable(true);
-                    builder1.setPositiveButton(
-                            "Oui",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-                                        int positionInListView = pos - listView.getFirstVisiblePosition();
-                                        View v = listView.getChildAt(positionInListView);
-                                        folderAdapter.getItem(pos).setIsDownloaded(false);
-                                        folderAdapter.getView(pos, v, listView);
-                                    }
-                                    // upload(pos);
-                                }
-                            });
-
-                    builder1.setNegativeButton(
-                            "Non",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                }
-                            });
-
-                    AlertDialog alert11 = builder1.create();
-                    alert11.show();
-                }
-
-            }
-
-        });
-
-    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -261,7 +271,6 @@ public class FolderFragment extends Fragment {
 
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_folder, container, false);
@@ -269,7 +278,6 @@ public class FolderFragment extends Fragment {
         Log.d(TAG, "onCreateView: " + savedInstanceState);
         return v;
     }
-
 
     @Override
     public void onAttach(Context context) {
@@ -286,7 +294,6 @@ public class FolderFragment extends Fragment {
         super.onDetach();
         mListener = null;
     }
-
 
     public File[] read() {
         File[] file = null;

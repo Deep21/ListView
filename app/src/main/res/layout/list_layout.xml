@@ -50,4 +50,13 @@
         android:layout_alignParentEnd="true"
         android:layout_marginTop="20dp" />
 
+    <CheckBox
+        android:id="@+id/checkBox1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:layout_alignBottom="@+id/done"
+        android:layout_toLeftOf="@+id/done"
+        android:layout_toStartOf="@+id/done" />
+
 </RelativeLayout>
