@@ -47,6 +47,7 @@ public class FolderFragment extends Fragment {
     private String absolutePath;
     private OnFragmentInteractionListener mListener;
 
+
     public FolderFragment() {
     }
 
@@ -162,7 +163,7 @@ public class FolderFragment extends Fragment {
                         }
                     }
                     // cas d'un fichier
-                    else if(f.isFile()) {
+                    else if (f.isFile()) {
                         fileUpload(pos);
                     }
                     //TODO Refactor

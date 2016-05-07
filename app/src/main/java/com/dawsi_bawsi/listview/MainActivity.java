@@ -49,7 +49,13 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         dropboxApi = getRetrofit();
         frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
+        FolderFragment folderFragment = (FolderFragment)getSupportFragmentManager().findFragmentByTag(FolderFragment.TAG);
+        if(folderFragment == null){
+            fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
+        }else{
+            fragmentTransaction.replace(R.id.frame_layout, folderFragment, FolderFragment.TAG).commit();
+
+        }
     }
 
     @Override

@@ -16,11 +16,11 @@ import java.util.List;
  * Created by Spartiate on 13/03/2016.
  */
 public class FileAdapter extends BaseAdapter {
+    public static final int FILE_VIEW = 0;
+    public static final int FOLDER_VIEW = 1;
     private static final String TAG = "FileAdapter";
     List<FileModel> persons;
     Context context;
-    public static final int FILE_VIEW = 0;
-    public static final int FOLDER_VIEW = 1;
 
     public FileAdapter(Context context, List<FileModel> objects) {
         this.persons = objects;
@@ -56,20 +56,21 @@ public class FileAdapter extends BaseAdapter {
         ViewHolder viewHolder;
         if (convertView == null) {
             viewHolder = new ViewHolder();
-            switch (getItemViewType(position)){
+            switch (getItemViewType(position)) {
 
-                case 0:
+                case FILE_VIEW:
                     Log.d(TAG, "getView: " + "File viewtype");
                     LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     convertView = inflater.inflate(R.layout.list_layout, parent, false);
                     viewHolder.progressBar = (ProgressBar) convertView.findViewById(R.id.progressBar);
                     viewHolder.txt1 = (TextView) convertView.findViewById(R.id.title2);
+                    viewHolder.fileSize = (TextView) convertView.findViewById(R.id.size);
                     viewHolder.done = (ImageView) convertView.findViewById(R.id.done);
                     viewHolder.fileTypeIcone = (ImageView) convertView.findViewById(R.id.img);
                     convertView.setTag(viewHolder);
                     break;
 
-                case 1:
+                case FOLDER_VIEW:
                     Log.d(TAG, "getView: " + "folder viewtype");
                     LayoutInflater folderInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     convertView = folderInflater.inflate(R.layout.list_layout_folder, parent, false);
@@ -83,13 +84,13 @@ public class FileAdapter extends BaseAdapter {
         viewHolder = (ViewHolder) convertView.getTag();
 
 
-
-        if(getItemViewType(position) == FILE_VIEW){
+        if (getItemViewType(position) == FILE_VIEW) {
 
             viewHolder.done.setImageResource(R.drawable.upload);
-
+            long size = getItem(position).getFile().length();
+            viewHolder.fileSize.setText("" + (size));
             //On initialise les vues par défaut
-            if(getItem(position).isShowProgressbar()){
+            if (getItem(position).isShowProgressbar()) {
                 viewHolder.progressBar.setVisibility(View.VISIBLE);
             }
 
@@ -105,8 +106,7 @@ public class FileAdapter extends BaseAdapter {
                 viewHolder.done.setVisibility(View.VISIBLE);
 
             }
-        }
-        else if(getItemViewType(position) == FOLDER_VIEW){
+        } else if (getItemViewType(position) == FOLDER_VIEW) {
             Log.d(TAG, "getView: " + "folder");
             viewHolder = (ViewHolder) convertView.getTag();
             viewHolder.nom.setText(getItem(position).getFile().getName());
@@ -118,11 +118,11 @@ public class FileAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        if(getItem(position).isFile){
-            return 0;
+        if (getItem(position).isFile) {
+            return FILE_VIEW;
         }
-        if(getItem(position).getFile().isDirectory()){
-            return 1;
+        if (getItem(position).getFile().isDirectory()) {
+            return FOLDER_VIEW;
         }
         return super.getItemViewType(position);
     }
@@ -138,6 +138,7 @@ public class FileAdapter extends BaseAdapter {
         ImageView done;
         ProgressBar progressBar;
         TextView nom;
+        TextView fileSize;
         ImageView folderTypeIcone;
 
     }
