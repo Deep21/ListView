@@ -5,27 +5,32 @@ import java.io.File;
 /**
  * Created by Spartiate on 11/03/2016.
  */
-class FileModel{
+class FileModel {
     boolean showProgressbar;
     String filename;
     long size;
-    int progress;
+    boolean isSelected;
     File file;
     boolean isFile;
     private boolean isDownloaded;
-
+    int position;
 
     public FileModel(String name, long size) {
         this.filename = name;
         this.size = size;
     }
 
-    public FileModel(int icone, File f) {
-    }
-
     public FileModel(File f) {
         this.file = f;
         isFile = file.isFile();
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setIsSelected(boolean isSelected) {
+        this.isSelected = isSelected;
     }
 
     public boolean isShowProgressbar() {

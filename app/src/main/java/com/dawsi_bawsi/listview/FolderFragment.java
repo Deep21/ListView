@@ -13,10 +13,12 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -130,10 +132,16 @@ public class FolderFragment extends Fragment {
                 //publishProgress(pos, (int) num);
             }
         });
+        List<rx.Observable<Response<Upload>>> observables = new ArrayList<>();
+
         DropboxApi dropboxapi =  ((MainActivity) getActivity()).dropboxApi;
-        sub = rx.Observable.concat(dropboxapi.uploadImage(requestBody, params), dropboxapi.uploadImage(requestBody, params)).subscribeOn(Schedulers.io())
+        observables.add(dropboxapi.uploadImage(requestBody, params));
+        observables.add(dropboxapi.uploadImage(requestBody, params));
+        sub = rx.Observable.merge(observables)
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new ErrorAction(getContext()))
+
                 .subscribe(new Action1<Response<Upload>>() {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
@@ -190,7 +198,7 @@ public class FolderFragment extends Fragment {
                     // cas d'un fichier
                     else if (f.isFile()) {
                         if (folderAdapter.getItem(position).isDownloaded() != NOT_UPLOADED) {
-                            fileUpload(pos);
+                            concatUpload(position);
                         } else {
                             AlertDialog.Builder builder1 = new AlertDialog.Builder(getContext());
                             builder1.setTitle("Attention !");

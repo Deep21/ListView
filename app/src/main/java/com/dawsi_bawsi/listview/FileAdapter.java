@@ -10,7 +10,9 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,7 +24,7 @@ public class FileAdapter extends BaseAdapter {
     Context context;
     public static final int FILE_VIEW = 0;
     public static final int FOLDER_VIEW = 1;
-
+    List<Integer> integers;
     public FileAdapter(Context context, List<FileModel> objects) {
         this.persons = objects;
         this.context = context;
@@ -53,7 +55,7 @@ public class FileAdapter extends BaseAdapter {
 
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         ViewHolder viewHolder;
         if (convertView == null) {
             viewHolder = new ViewHolder();
@@ -84,8 +86,17 @@ public class FileAdapter extends BaseAdapter {
         viewHolder = (ViewHolder) convertView.getTag();
 
         if(getItemViewType(position) == FILE_VIEW){
-
+            integers = new ArrayList<>();
             viewHolder.done.setImageResource(R.drawable.upload);
+            viewHolder.checkBox.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    getItem(position).setIsSelected(true);
+                    getItem(position).position = position;
+
+                }
+            });
+
             //On initialise les vues par défaut
             if(getItem(position).isShowProgressbar()){
                 viewHolder.progressBar.setVisibility(View.VISIBLE);
