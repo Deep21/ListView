@@ -5,14 +5,13 @@
 
     <TextView
         android:id="@+id/title2"
-        android:layout_width="wrap_content"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:text="Large Text"
-        android:layout_marginLeft="13dp"
-        android:layout_marginStart="13dp"
-        android:layout_alignTop="@+id/img"
+        android:layout_alignTop="@+id/done"
         android:layout_toRightOf="@+id/img"
-        android:layout_toEndOf="@+id/img" />
+        android:layout_toEndOf="@+id/img"
+        android:layout_marginLeft="10dp" />
 
     <ImageView
         android:focusable="false"
@@ -34,7 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:indeterminate="false"
-        android:layout_alignBottom="@+id/img"
+        android:layout_below="@+id/done"
         android:layout_alignLeft="@+id/title2"
         android:layout_alignStart="@+id/title2" />
 
@@ -49,5 +48,26 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="20dp" />
+
+    <TextView
+        android:id="@+id/size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Large Text"
+        android:layout_below="@+id/done"
+        android:layout_toLeftOf="@+id/textView"
+        android:layout_toStartOf="@+id/textView"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mo"
+        android:layout_alignBaseline="@+id/size"
+        android:layout_alignBottom="@+id/size"
+        android:layout_alignRight="@+id/done"
+        android:layout_alignEnd="@+id/done" />
 
 </RelativeLayout>
