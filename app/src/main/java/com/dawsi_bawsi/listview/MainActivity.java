@@ -21,6 +21,11 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     private static final String TAG = "MainActivity";
     private static final boolean NOT_UPLOADED = true;
     FrameLayout frameLayout;
+
+    public HttpInterceptor getHttpInterceptor() {
+        return httpInterceptor;
+    }
+
     HttpInterceptor httpInterceptor;
     DropboxApi dropboxApi;
 
@@ -37,7 +42,8 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
                 .baseUrl(BASE_URL)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
-                .build().create(DropboxApi.class);
+                .build()
+                .create(DropboxApi.class);
     }
 
     @Override
@@ -49,7 +55,13 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         dropboxApi = getRetrofit();
         frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
+        FolderFragment folderFragment = (FolderFragment)getSupportFragmentManager().findFragmentByTag(FolderFragment.TAG);
+        if(folderFragment == null){
+            fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
+        }else{
+            fragmentTransaction.replace(R.id.frame_layout, folderFragment, FolderFragment.TAG).commit();
+
+        }
     }
 
     @Override

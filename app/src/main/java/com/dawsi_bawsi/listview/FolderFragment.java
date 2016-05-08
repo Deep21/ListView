@@ -92,6 +92,7 @@ public class FolderFragment extends Fragment {
         mode.setTag("add");
         uploadParam.setMode(mode);
         String params = gson.toJson(uploadParam);
+
         ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
             @Override
             public void transferred(long num) {
@@ -99,8 +100,8 @@ public class FolderFragment extends Fragment {
                 publishProgress(pos, (int) num);
             }
         });
-        //concatUpload(position);
-/*        sub = ((MainActivity) getActivity()).dropboxApi.uploadImage(requestBody, params)
+
+        sub = ((MainActivity) getActivity()).dropboxApi.uploadImage(requestBody, params)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new ErrorAction(getContext()))
@@ -109,7 +110,8 @@ public class FolderFragment extends Fragment {
                     public void call(Response<Upload> uploadResponse) {
                         refreshListView(pos);
                     }
-                });*/
+                });
+
     }
 
     public void concatUpload(int position){
@@ -128,15 +130,30 @@ public class FolderFragment extends Fragment {
         ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
             @Override
             public void transferred(long num) {
-                Log.d(TAG, "transferred: " + num);
-                //publishProgress(pos, (int) num);
+                Log.d(TAG, "requestBody: " + num);
+                publishProgress(2, (int)num);
+            }
+        });
+
+        ProgressFileRequestBody requestBody1 = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+            @Override
+            public void transferred(long num) {
+                Log.d(TAG, "requestBody1: " + num);
+                publishProgress(3, (int)num);
+
             }
         });
         List<rx.Observable<Response<Upload>>> observables = new ArrayList<>();
 
         DropboxApi dropboxapi =  ((MainActivity) getActivity()).dropboxApi;
-        observables.add(dropboxapi.uploadImage(requestBody, params));
-        observables.add(dropboxapi.uploadImage(requestBody, params));
+        observables.add(dropboxapi.uploadImage(requestBody, params)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+        );
+        observables.add(dropboxapi.uploadImage(requestBody1, params)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+        );
         sub = rx.Observable.merge(observables)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -146,7 +163,7 @@ public class FolderFragment extends Fragment {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
                         Log.d(TAG, "call: " + uploadResponse);
-                        //refreshListView(pos);
+
                     }
                 });
     }
@@ -199,6 +216,7 @@ public class FolderFragment extends Fragment {
                     else if (f.isFile()) {
                         if (folderAdapter.getItem(position).isDownloaded() != NOT_UPLOADED) {
                             concatUpload(position);
+                            //fileUpload(position);
                         } else {
                             AlertDialog.Builder builder1 = new AlertDialog.Builder(getContext());
                             builder1.setTitle("Attention !");
@@ -273,6 +291,7 @@ public class FolderFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         Log.d(TAG, "onCreate: ");
         if (getArguments() != null) {
         }
