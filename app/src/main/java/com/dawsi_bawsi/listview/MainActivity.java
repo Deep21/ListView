@@ -1,13 +1,16 @@
 package com.dawsi_bawsi.listview;
 
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.FrameLayout;
 
 import okhttp3.OkHttpClient;
@@ -24,6 +27,32 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
 
     public HttpInterceptor getHttpInterceptor() {
         return httpInterceptor;
+    }
+
+    @Override
+    public void onBackPressed() {
+        FolderFragment folderFragment = (FolderFragment)getSupportFragmentManager().findFragmentByTag(FolderFragment.TAG);
+        if(folderFragment !=null){
+            if(folderFragment.isVisible()){
+                AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
+                builder1.setTitle("Attention !");
+                builder1.setMessage("Vous allez annuler la tâche en cours ?");
+                builder1.setCancelable(true);
+                builder1.setPositiveButton(
+                        "Oui",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                finish();
+                            }
+                        });
+
+
+
+                AlertDialog alert11 = builder1.create();
+                alert11.show();
+            }
+        }
+        super.onBackPressed();
     }
 
     HttpInterceptor httpInterceptor;

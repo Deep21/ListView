@@ -13,20 +13,21 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.lang.reflect.Array;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
 
 import retrofit2.Response;
+import rx.Notification;
+import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 
 
@@ -114,12 +115,16 @@ public class FolderFragment extends Fragment {
 
     }
 
-    public void concatUpload(int position){
+
+    public void concatUpload(int position) {
+        //TODO lors du upload si on reviens on arrière : on prévien l'utilisateur
+        //TODO mettre le pourcentage dans la barre de upload et le Mo
+        //TODO cancel request
         final int pos = position;
         Gson gson = new Gson();
         File file = folderAdapter.getItem(position).getFile();
         String path = "/CV/" + file.getName();
-        UploadParam uploadParam = new UploadParam();
+        final UploadParam uploadParam = new UploadParam();
         uploadParam.setPath(path);
         uploadParam.setAutorename(true);
         uploadParam.setMute(false);
@@ -127,34 +132,71 @@ public class FolderFragment extends Fragment {
         mode.setTag("add");
         uploadParam.setMode(mode);
         String params = gson.toJson(uploadParam);
+        MainActivity mainActivity = (MainActivity) getActivity();
+        mainActivity.getHttpInterceptor().setOnUpload(new HttpInterceptor.UploadResponse() {
+            @Override
+            public void onUpload(okhttp3.Response r) throws IOException {
+                Log.d(TAG, "onUpload: " + r.request());
+            }
+        });
         ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
             @Override
             public void transferred(long num) {
                 Log.d(TAG, "requestBody: " + num);
-                publishProgress(2, (int)num);
+                publishProgress(pos, (int) num);
             }
         });
 
-        ProgressFileRequestBody requestBody1 = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+
+        File file1 = folderAdapter.getItem(position + 1).getFile();
+        ProgressFileRequestBody requestBody1 = new ProgressFileRequestBody(file1, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
             @Override
             public void transferred(long num) {
                 Log.d(TAG, "requestBody1: " + num);
-                publishProgress(3, (int)num);
+                publishProgress(pos + 1, (int) num);
 
             }
         });
-        List<rx.Observable<Response<Upload>>> observables = new ArrayList<>();
+        DropboxApi dropboxapi = ((MainActivity) getActivity()).dropboxApi;
 
-        DropboxApi dropboxapi =  ((MainActivity) getActivity()).dropboxApi;
-        observables.add(dropboxapi.uploadImage(requestBody, params)
+/*        sub = Observable.zip(
+                dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()),
+                dropboxapi.uploadImage(requestBody1, params).subscribeOn(Schedulers.io()),
+                new Func2<Response<Upload>, Response<Upload>, String>() {
+                    @Override
+                    public String call(Response<Upload> uploadResponse0, Response<Upload> uploadResponse1) {
+                        Log.d(TAG, "uploadResponse: " + uploadResponse0.code());
+                        Log.d(TAG, "uploadResponse: " + uploadResponse1.code());
+                        return "ok";
+                    }
+                }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<String>() {
+                    @Override
+                    public void call(String o) {
+                        Log.d(TAG, "call: " + o);
+                    }
+                });*/
+
+        sub = Observable.concat(
+                dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()),
+                dropboxapi.uploadImage(requestBody1, params).subscribeOn(Schedulers.io()))
+                .doOnEach(new Action1<Notification<? super Response<Upload>>>() {
+                    @Override
+                    public void call(Notification<? super Response<Upload>> notification) {
+                        Log.d(TAG, "uploadResponse1: " + notification);
+                    }
+                })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-        );
-        observables.add(dropboxapi.uploadImage(requestBody1, params)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-        );
-        sub = rx.Observable.merge(observables)
+                .subscribe(new Action1<Response<Upload>>() {
+                    @Override
+                    public void call(Response<Upload> uploadResponse) {
+                        Log.d(TAG, "uploadResponse: " + uploadResponse);
+                    }
+                });
+
+/*        sub = rx.Observable.merge(observables)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new ErrorAction(getContext()))
@@ -162,10 +204,10 @@ public class FolderFragment extends Fragment {
                 .subscribe(new Action1<Response<Upload>>() {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
-                        Log.d(TAG, "call: " + uploadResponse);
+                        Log.d(TAG, "uploadResponse: " + uploadResponse.body().getName());
 
                     }
-                });
+                });*/
     }
 
     public void refreshListView(int pos) {
