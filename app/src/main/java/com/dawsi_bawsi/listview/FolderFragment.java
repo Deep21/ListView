@@ -13,15 +13,14 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.lang.reflect.Array;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
+
 
 import retrofit2.Response;
 import rx.Subscription;
@@ -114,7 +113,11 @@ public class FolderFragment extends Fragment {
 
     }
 
+
+
+
     public void concatUpload(int position){
+        //TODO lors du upload si on reviens on arrière : on rpévien l'utilisateur
         final int pos = position;
         Gson gson = new Gson();
         File file = folderAdapter.getItem(position).getFile();
@@ -127,19 +130,28 @@ public class FolderFragment extends Fragment {
         mode.setTag("add");
         uploadParam.setMode(mode);
         String params = gson.toJson(uploadParam);
+        MainActivity mainActivity = (MainActivity)getActivity();
+        mainActivity.getHttpInterceptor().setOnUpload(new HttpInterceptor.UploadResponse() {
+            @Override
+            public void onUpload(okhttp3.Response r) throws IOException {
+                Log.d(TAG, "onUpload: " + r.request());
+            }
+        });
         ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
             @Override
             public void transferred(long num) {
                 Log.d(TAG, "requestBody: " + num);
-                publishProgress(2, (int)num);
+                publishProgress(pos, (int)num);
             }
         });
 
-        ProgressFileRequestBody requestBody1 = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+
+        File file1 = folderAdapter.getItem(position + 1).getFile();
+        ProgressFileRequestBody requestBody1 = new ProgressFileRequestBody(file1, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
             @Override
             public void transferred(long num) {
                 Log.d(TAG, "requestBody1: " + num);
-                publishProgress(3, (int)num);
+                publishProgress(pos +1, (int)num);
 
             }
         });
@@ -162,7 +174,7 @@ public class FolderFragment extends Fragment {
                 .subscribe(new Action1<Response<Upload>>() {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
-                        Log.d(TAG, "call: " + uploadResponse);
+                        Log.d(TAG, "uploadResponse: " + uploadResponse.body().getName());
 
                     }
                 });

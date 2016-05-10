@@ -11,24 +11,25 @@ import okhttp3.Response;
 public class HttpInterceptor implements Interceptor {
     private static final String TAG = "HttpInterceptor";
     UploadResponse onUpload;
-
+    public interface UploadResponse {
+        int UNAUTHORIZED = 401;
+        int BADREQUEST = 400;
+        int INSUFFICIENT_STORAGE = 507;
+        void onUpload(Response r) throws IOException;
+    }
     public void setOnUpload(UploadResponse onUpload) {
         this.onUpload = onUpload;
     }
 
     @Override
     public Response intercept(Chain chain) throws IOException {
+        Response r = chain.proceed(chain.request());
         if (onUpload != null) {
-            return onUpload.onUpload(chain);
+            // new Handler(Looper.getMainLooper()).post(() -> eventBus.post(new AuthenticationErrorEvent()));
+             onUpload.onUpload(r);
         }
-        return chain.proceed(chain.request());
+        return r;
     }
 
-    public interface UploadResponse {
-        int UNAUTHORIZED = 401;
-        int BADREQUEST = 400;
-        int INSUFFICIENT_STORAGE = 507;
 
-        Response onUpload(Chain chain) throws IOException;
-    }
 }

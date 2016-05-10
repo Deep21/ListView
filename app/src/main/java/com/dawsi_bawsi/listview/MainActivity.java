@@ -26,6 +26,12 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         return httpInterceptor;
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.d(TAG, "onBackPressed: ");
+    }
+
     HttpInterceptor httpInterceptor;
     DropboxApi dropboxApi;
 
