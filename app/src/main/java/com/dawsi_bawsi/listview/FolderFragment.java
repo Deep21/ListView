@@ -159,55 +159,27 @@ public class FolderFragment extends Fragment {
         });
         DropboxApi dropboxapi = ((MainActivity) getActivity()).dropboxApi;
 
-/*        sub = Observable.zip(
-                dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()),
-                dropboxapi.uploadImage(requestBody1, params).subscribeOn(Schedulers.io()),
-                new Func2<Response<Upload>, Response<Upload>, String>() {
-                    @Override
-                    public String call(Response<Upload> uploadResponse0, Response<Upload> uploadResponse1) {
-                        Log.d(TAG, "uploadResponse: " + uploadResponse0.code());
-                        Log.d(TAG, "uploadResponse: " + uploadResponse1.code());
-                        return "ok";
-                    }
-                }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<String>() {
-                    @Override
-                    public void call(String o) {
-                        Log.d(TAG, "call: " + o);
-                    }
-                });*/
+        List<Observable<Response<Upload>>> observables = new ArrayList<>();
+        observables.add(dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()));
+        observables.add(dropboxapi.uploadImage(requestBody1, params).subscribeOn(Schedulers.io()));
+        observables.add(dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()));
 
-        sub = Observable.concat(
-                dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()),
-                dropboxapi.uploadImage(requestBody1, params).subscribeOn(Schedulers.io()))
-                .doOnEach(new Action1<Notification<? super Response<Upload>>>() {
-                    @Override
-                    public void call(Notification<? super Response<Upload>> notification) {
-                        Log.d(TAG, "uploadResponse1: " + notification);
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<Response<Upload>>() {
-                    @Override
-                    public void call(Response<Upload> uploadResponse) {
-                        Log.d(TAG, "uploadResponse: " + uploadResponse);
-                    }
-                });
-
-/*        sub = rx.Observable.merge(observables)
+        sub = Observable.merge(observables)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new ErrorAction(getContext()))
-
+                .doOnEach(new Action1<Notification<? super Response<Upload>>>() {
+                    @Override
+                    public void call(Notification<? super Response<Upload>> notification) {
+                        Log.d(TAG, "notification: " + notification);
+                    }
+                })
                 .subscribe(new Action1<Response<Upload>>() {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
                         Log.d(TAG, "uploadResponse: " + uploadResponse.body().getName());
-
                     }
-                });*/
+                });
     }
 
     public void refreshListView(int pos) {
