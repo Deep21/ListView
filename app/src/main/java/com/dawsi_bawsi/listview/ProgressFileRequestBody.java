@@ -17,7 +17,7 @@ public class ProgressFileRequestBody extends RequestBody {
 
     private static final int SEGMENT_SIZE = 2048; // okio.Segment.SIZE
     private static final String TAG = "ProgressFileRequestBody";
-
+    private int position;
     private final File file;
     private final ProgressListener listener;
     private final String contentType;
@@ -78,6 +78,10 @@ public class ProgressFileRequestBody extends RequestBody {
 
     public interface ProgressListener {
         void transferred(long num);
+    }
+
+    public int getPostion(){
+        return position;
     }
 
 }

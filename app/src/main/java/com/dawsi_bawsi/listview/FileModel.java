@@ -6,6 +6,8 @@ import java.io.File;
  * Created by Spartiate on 11/03/2016.
  */
 class FileModel {
+    public static final int EMPTY = 0;
+    public static final int FULL = 100;
     boolean showProgressbar;
     String filename;
     long size;
@@ -13,7 +15,7 @@ class FileModel {
     File file;
     boolean isFile;
     private boolean isDownloaded;
-    int position;
+    public int position;
 
     public FileModel(String name, long size) {
         this.filename = name;

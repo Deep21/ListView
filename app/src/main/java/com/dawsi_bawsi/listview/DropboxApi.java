@@ -17,11 +17,11 @@ public interface DropboxApi {
     @Multipart
     @Headers({
             "Content-Type: application/octet-stream",
-            "Authorization: Bearer wORVBx-8aJ4AAAAAAAAG7re75xSZH-k3tw2sPXJu73YzkmpB-FJFeg_Ek-_QfNMe"
+            "Authorization: Bearer wORVBx-8aJ4AAAAAAAALNkOR74PnYr6pWMXIQKe-1-euueut8mzUwyW2pJC0nrZ7"
     })
 
     @POST("2/files/upload")
-    Observable<Response<Upload>> uploadImage(@Part("hello\"; filename=\"hello.txt\" ") ProgressFileRequestBody file, @Header("Dropbox-API-Arg") String fileUploadParam);
+    Observable<Response<Upload>> uploadImage(@Part("hello\"; filename=\"hello.txt\" ") ProgressFileRequestBody file, @Header("Dropbox-API-Arg") String fileUploadParam, @Header("pos") int pos);
 
 
 }

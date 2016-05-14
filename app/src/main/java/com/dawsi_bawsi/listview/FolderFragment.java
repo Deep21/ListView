@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -17,23 +18,23 @@ import android.widget.ProgressBar;
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import retrofit2.Response;
 import rx.Notification;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
-import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 
 
 public class FolderFragment extends Fragment {
     public static final String TAG = "FolderFragment";
-    private static final String ARG_PARAM1 = "param1";
+    private static final String ABSOLUTE_PATH = "absolutePath";
     private static final String ARG_PARAM2 = "param2";
     private static final boolean NOT_UPLOADED = true;
     FileAdapter folderAdapter;
@@ -49,7 +50,7 @@ public class FolderFragment extends Fragment {
     public static FolderFragment newInstance(String absolutePath) {
         FolderFragment fragment = new FolderFragment();
         Bundle args = new Bundle();
-        args.putString("absolutePath", absolutePath);
+        args.putString(ABSOLUTE_PATH, absolutePath);
         fragment.setArguments(args);
         return fragment;
     }
@@ -80,89 +81,37 @@ public class FolderFragment extends Fragment {
         Log.d(TAG, "onDestroy: ");
     }
 
-    private void fileUpload(int position) {
-        final int pos = position;
-        Gson gson = new Gson();
-        File file = folderAdapter.getItem(position).getFile();
-        String path = "/CV/" + file.getName();
-        UploadParam uploadParam = new UploadParam();
-        uploadParam.setPath(path);
-        uploadParam.setAutorename(true);
-        uploadParam.setMute(false);
-        Mode mode = new Mode();
-        mode.setTag("add");
-        uploadParam.setMode(mode);
-        String params = gson.toJson(uploadParam);
 
-        ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-            @Override
-            public void transferred(long num) {
-                Log.d(TAG, "transferred: " + num);
-                publishProgress(pos, (int) num);
-            }
-        });
-
-        sub = ((MainActivity) getActivity()).dropboxApi.uploadImage(requestBody, params)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new ErrorAction(getContext()))
-                .subscribe(new Action1<Response<Upload>>() {
-                    @Override
-                    public void call(Response<Upload> uploadResponse) {
-                        refreshListView(pos);
-                    }
-                });
-
-    }
-
-
-    public void concatUpload(int position) {
+    public void multiUpload(List<FileModel> fileModels) {
         //TODO lors du upload si on reviens on arrière : on prévien l'utilisateur
         //TODO mettre le pourcentage dans la barre de upload et le Mo
         //TODO cancel request
-        final int pos = position;
-        Gson gson = new Gson();
-        File file = folderAdapter.getItem(position).getFile();
-        String path = "/CV/" + file.getName();
-        final UploadParam uploadParam = new UploadParam();
-        uploadParam.setPath(path);
-        uploadParam.setAutorename(true);
-        uploadParam.setMute(false);
-        Mode mode = new Mode();
-        mode.setTag("add");
-        uploadParam.setMode(mode);
-        String params = gson.toJson(uploadParam);
-        MainActivity mainActivity = (MainActivity) getActivity();
-        mainActivity.getHttpInterceptor().setOnUpload(new HttpInterceptor.UploadResponse() {
-            @Override
-            public void onUpload(okhttp3.Response r) throws IOException {
-                Log.d(TAG, "onUpload: " + r.request());
-            }
-        });
-        ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-            @Override
-            public void transferred(long num) {
-                Log.d(TAG, "requestBody: " + num);
-                publishProgress(pos, (int) num);
-            }
-        });
-
-
-        File file1 = folderAdapter.getItem(position + 1).getFile();
-        ProgressFileRequestBody requestBody1 = new ProgressFileRequestBody(file1, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
-            @Override
-            public void transferred(long num) {
-                Log.d(TAG, "requestBody1: " + num);
-                publishProgress(pos + 1, (int) num);
-
-            }
-        });
         DropboxApi dropboxapi = ((MainActivity) getActivity()).dropboxApi;
-
+        HttpInterceptor httpInterceptor = ((MainActivity) getActivity()).getHttpInterceptor();
         List<Observable<Response<Upload>>> observables = new ArrayList<>();
-        observables.add(dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()));
-        observables.add(dropboxapi.uploadImage(requestBody1, params).subscribeOn(Schedulers.io()));
-        observables.add(dropboxapi.uploadImage(requestBody, params).subscribeOn(Schedulers.io()));
+        if (fileModels != null) {
+            for (final FileModel f : fileModels) {
+                File file = f.getFile();
+                String path = "/CV/" + file.getName();
+                final UploadParam uploadParam = new UploadParam();
+                uploadParam.setPath(path);
+                uploadParam.setAutorename(true);
+                uploadParam.setMute(false);
+                Mode mode = new Mode();
+                mode.setTag("add");
+                uploadParam.setMode(mode);
+                Gson gson = new Gson();
+                String params = gson.toJson(uploadParam);
+                ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
+                    @Override
+                    public void transferred(long num) {
+                        publishProgress(f.position, (int) num);
+                    }
+                });
+                httpInterceptor.setPosition(f.position);
+                observables.add(dropboxapi.uploadImage(requestBody, params, f.position).subscribeOn(Schedulers.io()));
+            }
+        }
 
         sub = Observable.merge(observables)
                 .subscribeOn(Schedulers.io())
@@ -177,9 +126,13 @@ public class FolderFragment extends Fragment {
                 .subscribe(new Action1<Response<Upload>>() {
                     @Override
                     public void call(Response<Upload> uploadResponse) {
-                        Log.d(TAG, "uploadResponse: " + uploadResponse.body().getName());
+                        refreshListView(Integer.parseInt(uploadResponse.raw().headers().get("position")));
+                        Request t = uploadResponse.raw().request();
+                        Log.d(TAG, "uploadResponse: " + uploadResponse.raw().headers().get("position"));
+                        Log.d(TAG, "uploadResponse + request: " + t.headers().get("pos"));
                     }
                 });
+
     }
 
     public void refreshListView(int pos) {
@@ -188,17 +141,24 @@ public class FolderFragment extends Fragment {
             View v = listView.getChildAt(positionInListView);
             folderAdapter.getItem(pos).setIsDownloaded(true);
             folderAdapter.getView(pos, v, listView);
+            Log.d(TAG, "refreshListView: ");
         }
     }
 
+
     public void publishProgress(int position, int progress) {
+        Log.d(TAG, "publishProgress not in the: ");
+
         if (position >= listView.getFirstVisiblePosition() && position <= listView.getLastVisiblePosition()) {
+            Log.d(TAG, "publishProgress: ");
             int positionInListView = position - listView.getFirstVisiblePosition();
             View v = listView.getChildAt(positionInListView);
             ProgressBar p = (ProgressBar) v.findViewById(R.id.progressBar);
+            p.setProgress(0);
             p.setProgress(progress);
         }
     }
+
 
     @Override
     public void onStart() {
@@ -207,7 +167,7 @@ public class FolderFragment extends Fragment {
         //deuxième lancement
         if (getArguments() != null) {
             List<FileModel> fileModels = new ArrayList<>();
-            absolutePath = getArguments().getString("absolutePath");
+            absolutePath = getArguments().getString(ABSOLUTE_PATH);
             File[] files = new File(absolutePath).listFiles();
             for (File file : files) {
                 FileModel fileModel = new FileModel(file);
@@ -229,8 +189,7 @@ public class FolderFragment extends Fragment {
                     // cas d'un fichier
                     else if (f.isFile()) {
                         if (folderAdapter.getItem(position).isDownloaded() != NOT_UPLOADED) {
-                            concatUpload(position);
-                            //fileUpload(position);
+
                         } else {
                             AlertDialog.Builder builder1 = new AlertDialog.Builder(getContext());
                             builder1.setTitle("Attention !");
@@ -265,7 +224,6 @@ public class FolderFragment extends Fragment {
                     }
                     //TODO Refactor
 
-
                 }
             });
         }
@@ -295,7 +253,6 @@ public class FolderFragment extends Fragment {
         }
     }
 
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -305,8 +262,7 @@ public class FolderFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
-        Log.d(TAG, "onCreate: ");
+        setHasOptionsMenu(true);
         if (getArguments() != null) {
         }
 
@@ -353,19 +309,30 @@ public class FolderFragment extends Fragment {
         return file;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.upload) {
+            List<Integer> fileModels = folderAdapter.integers;
+            Log.d(TAG, "onOptionsItemSelected: " + fileModels);
+            //multiUpload(fileModels);
+            return true;
+        }
+
+        if (id == R.id.checkBox1) {
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onCreateFolderFragment(String fileName);
 
     }

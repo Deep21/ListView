@@ -7,10 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +19,14 @@ import java.util.List;
  * Created by Spartiate on 13/03/2016.
  */
 public class FileAdapter extends BaseAdapter {
+    public static final int FILE_VIEW = 0;
+    public static final int FOLDER_VIEW = 1;
     private static final String TAG = "FileAdapter";
     List<FileModel> persons;
     Context context;
-    public static final int FILE_VIEW = 0;
-    public static final int FOLDER_VIEW = 1;
     List<Integer> integers;
+    List<FileModel> ff;
+
     public FileAdapter(Context context, List<FileModel> objects) {
         this.persons = objects;
         this.context = context;
@@ -59,7 +61,7 @@ public class FileAdapter extends BaseAdapter {
         ViewHolder viewHolder;
         if (convertView == null) {
             viewHolder = new ViewHolder();
-            switch (getItemViewType(position)){
+            switch (getItemViewType(position)) {
 
                 case FILE_VIEW:
                     LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -85,25 +87,39 @@ public class FileAdapter extends BaseAdapter {
         }
         viewHolder = (ViewHolder) convertView.getTag();
 
-        if(getItemViewType(position) == FILE_VIEW){
-            integers = new ArrayList<>();
+        if (getItemViewType(position) == FILE_VIEW) {
             viewHolder.done.setImageResource(R.drawable.upload);
-            viewHolder.checkBox.setOnClickListener(new View.OnClickListener() {
+            integers = new ArrayList<>();
+            //Log.d(TAG, "onCheckedChanged: " + position);
+            Log.d(TAG, "getView: "+ getItem(position).isSelected());
+            viewHolder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
-                public void onClick(View v) {
-                    getItem(position).setIsSelected(true);
-                    getItem(position).position = position;
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    // Log.d(TAG, "onCheckedChanged: " + isChecked);
+                    //Log.d(TAG, "onCheckedChanged: " + isChecked);
+                    if (isChecked) {
+                        Log.d(TAG, "onCheckedChanged: " + isChecked);
+                        getItem(position).setIsSelected(isChecked);
+                        getItem(position).position = position;
+                        integers.add(position);
+                    } else {
+                        getItem(position).setIsSelected(isChecked);
+                        Log.d(TAG, "else onCheckedChanged: " + isChecked);
+                        //integers.remove(position);
+                    }
 
                 }
             });
 
+            viewHolder.checkBox.setChecked(getItem(position).isSelected());
+
             //On initialise les vues par défaut
-            if(getItem(position).isShowProgressbar()){
+            if (getItem(position).isShowProgressbar()) {
                 viewHolder.progressBar.setVisibility(View.VISIBLE);
             }
 
             if (getItem(position).isDownloaded() != true) {
-                viewHolder.progressBar.setProgress(0);
+                viewHolder.progressBar.setProgress(getItem(position).EMPTY);
                 viewHolder.txt1.setText(getItem(position).getFile().getName());
                 //viewHolder.done.setVisibility(View.INVISIBLE);
             }
@@ -118,8 +134,7 @@ public class FileAdapter extends BaseAdapter {
             //TODO
             //Ajout de tableau ds le adaptor pour multi upload
             //puis a lexterieur de ladaptor récupérer la liste et uploader
-        }
-        else if(getItemViewType(position) == FOLDER_VIEW){
+        } else if (getItemViewType(position) == FOLDER_VIEW) {
             viewHolder = (ViewHolder) convertView.getTag();
             viewHolder.nom.setText(getItem(position).getFile().getName());
         }
@@ -130,10 +145,9 @@ public class FileAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        if(getItem(position).isFile){
+        if (getItem(position).isFile) {
             return FILE_VIEW;
-        }
-        else if(getItem(position).getFile().isDirectory()){
+        } else if (getItem(position).getFile().isDirectory()) {
             return FOLDER_VIEW;
         }
         return super.getItemViewType(position);
