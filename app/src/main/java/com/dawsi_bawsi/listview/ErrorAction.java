@@ -3,6 +3,8 @@ package com.dawsi_bawsi.listview;
 import android.content.Context;
 import android.support.v7.app.AlertDialog;
 
+import com.dawsi_bawsi.listview.model.Upload;
+
 import retrofit2.Response;
 import rx.functions.Action1;
 

@@ -1,5 +1,6 @@
 package com.dawsi_bawsi.listview;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
@@ -15,6 +16,10 @@ import okhttp3.Response;
 public class HttpInterceptor implements Interceptor {
     private static final String TAG = "HttpInterceptor";
     UploadResponse onUpload;
+
+    public HttpInterceptor(Context context){
+    }
+
     public interface UploadResponse {
         int UNAUTHORIZED = 401;
         int BADREQUEST = 400;
@@ -29,6 +34,7 @@ public class HttpInterceptor implements Interceptor {
     public void setPosition(int position){
         Log.d(TAG, "setPosition: " + position);
     }
+
 
     @Override
     public Response intercept(Chain chain) throws IOException {

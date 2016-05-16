@@ -18,16 +18,15 @@ import java.util.List;
 /**
  * Created by Spartiate on 13/03/2016.
  */
-public class FileAdapter extends BaseAdapter {
+public class ExplorerAdapter extends BaseAdapter {
     public static final int FILE_VIEW = 0;
     public static final int FOLDER_VIEW = 1;
-    private static final String TAG = "FileAdapter";
+    private static final String TAG = "ExplorerAdapter";
     List<FileModel> persons;
     Context context;
-    List<Integer> integers;
-    List<FileModel> ff;
+    List<Integer> positions;
 
-    public FileAdapter(Context context, List<FileModel> objects) {
+    public ExplorerAdapter(Context context, List<FileModel> objects) {
         this.persons = objects;
         this.context = context;
     }
@@ -89,7 +88,7 @@ public class FileAdapter extends BaseAdapter {
 
         if (getItemViewType(position) == FILE_VIEW) {
             viewHolder.done.setImageResource(R.drawable.upload);
-            integers = new ArrayList<>();
+            positions = new ArrayList<>();
             //Log.d(TAG, "onCheckedChanged: " + position);
             Log.d(TAG, "getView: "+ getItem(position).isSelected());
             viewHolder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -101,11 +100,11 @@ public class FileAdapter extends BaseAdapter {
                         Log.d(TAG, "onCheckedChanged: " + isChecked);
                         getItem(position).setIsSelected(isChecked);
                         getItem(position).position = position;
-                        integers.add(position);
+                        positions.add(position);
                     } else {
                         getItem(position).setIsSelected(isChecked);
                         Log.d(TAG, "else onCheckedChanged: " + isChecked);
-                        //integers.remove(position);
+                        //positions.remove(position);
                     }
 
                 }

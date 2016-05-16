@@ -16,10 +16,9 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity implements FolderFragment.OnFragmentInteractionListener{
+public class MainActivity extends AppCompatActivity implements ExplorerFragment.OnFragmentInteractionListener{
     public static final String BASE_URL = "https://content.dropboxapi.com/";
     private static final String TAG = "MainActivity";
-    private static final boolean NOT_UPLOADED = true;
     FrameLayout frameLayout;
     HttpInterceptor httpInterceptor;
     DropboxApi dropboxApi;
@@ -36,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     public DropboxApi getRetrofit() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        httpInterceptor = new HttpInterceptor();
+        httpInterceptor = new HttpInterceptor(this);
         client = new OkHttpClient.Builder()
                 .addInterceptor(httpInterceptor)
                 .addInterceptor(interceptor)
@@ -59,13 +58,19 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
         setSupportActionBar(toolbar);
         dropboxApi = getRetrofit();
         frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        FolderFragment folderFragment = (FolderFragment)getSupportFragmentManager().findFragmentByTag(FolderFragment.TAG);
-        if(folderFragment == null){
-            fragmentTransaction.add(R.id.frame_layout, FolderFragment.newInstance(), FolderFragment.TAG).commit();
-        }else{
-            fragmentTransaction.replace(R.id.frame_layout, folderFragment, FolderFragment.TAG).commit();
+        lunchFragment();
+    }
 
+    /**
+     * Lance explorer Fragment
+     */
+    public void lunchFragment(){
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        ExplorerFragment explorerFragment = (ExplorerFragment)getSupportFragmentManager().findFragmentByTag(ExplorerFragment.TAG);
+        if(explorerFragment == null){
+            fragmentTransaction.add(R.id.frame_layout, ExplorerFragment.newInstance(), ExplorerFragment.TAG).commit();
+        }else{
+            fragmentTransaction.replace(R.id.frame_layout, explorerFragment, ExplorerFragment.TAG).commit();
         }
     }
 
@@ -102,7 +107,10 @@ public class MainActivity extends AppCompatActivity implements FolderFragment.On
     @Override
     public void onCreateFolderFragment(String absolutePath) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, FolderFragment.newInstance(absolutePath), FolderFragment.TAG).addToBackStack(null).commit();
+        fragmentTransaction
+                .replace(R.id.frame_layout, ExplorerFragment.newInstance(absolutePath), ExplorerFragment.TAG)
+                .addToBackStack(null)
+                .commit();
 
     }
 }

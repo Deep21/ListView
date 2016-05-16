@@ -1,4 +1,4 @@
-package com.dawsi_bawsi.listview;
+package com.dawsi_bawsi.listview.model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
