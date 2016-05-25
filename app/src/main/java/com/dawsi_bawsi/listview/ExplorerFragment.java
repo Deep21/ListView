@@ -7,6 +7,7 @@ import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,6 +18,9 @@ import android.widget.ProgressBar;
 
 import com.dawsi_bawsi.listview.model.Upload;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +29,12 @@ import okhttp3.Request;
 import retrofit2.Response;
 import rx.Notification;
 import rx.Observable;
+import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
+import rx.subjects.PublishSubject;
 
 
 public class ExplorerFragment extends Fragment {
@@ -39,10 +45,11 @@ public class ExplorerFragment extends Fragment {
     ExplorerAdapter explorerAdapter;
     ListView listView;
     Subscription sub;
+    List<PublishSubject> publishSubjectList;
     private File[] files;
     private String absolutePath;
     private OnFragmentInteractionListener mListener;
-
+    SparseIntArray positions = new SparseIntArray();
     public ExplorerFragment() {
     }
 
@@ -81,17 +88,17 @@ public class ExplorerFragment extends Fragment {
     }
 
 
-    public void multiUpload(List<Integer> positions) {
+    public void multiUpload(SparseIntArray sparseIntArray) {
         //TODO lors du upload si on reviens on arrière : on prévien l'utilisateur
         //TODO mettre le pourcentage dans la barre de upload et le Mo
-        //TODO cancel request
         DropboxApi dropboxapi = ((MainActivity) getActivity()).dropboxApi;
         HttpInterceptor httpInterceptor = ((MainActivity) getActivity()).getHttpInterceptor();
         List<Observable<Response<Upload>>> observables = new ArrayList<>();
-        if (positions != null) {
-            for (Integer position : positions) {
-                final Integer pos = position;
-                File file = explorerAdapter.getItem(position).getFile();
+        publishSubjectList = new ArrayList<>();
+        if (sparseIntArray != null) {
+            for(int i = 0; i < sparseIntArray.size(); i++){
+                final int pos = sparseIntArray.get(i);
+                File file = explorerAdapter.getItem(pos).getFile();
                 String params = DropboxGsonUtility.uploadParams(file);
                 ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
                     @Override
@@ -99,30 +106,51 @@ public class ExplorerFragment extends Fragment {
                         publishProgress(pos, (int) num);
                     }
                 });
-                httpInterceptor.setPosition(position);
-                observables.add(dropboxapi.uploadImage(requestBody, params, position).subscribeOn(Schedulers.io()));
+                httpInterceptor.setPosition(pos);
+                PublishSubject control = PublishSubject.create();
+                publishSubjectList.add(control);
+                Observable<Response<Upload>> cancellableRestrofitObservable = dropboxapi.uploadImage(requestBody, params, pos)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .takeUntil(control.asObservable());
+                observables.add(cancellableRestrofitObservable);
             }
+            Observable<Response<Upload>> mergedObservable = Observable.merge(observables);
+            sub = mergedObservable.subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnNext(new Action1<Response<Upload>>() {
+                        @Override
+                        public void call(Response<Upload> uploadResponse) {
+                            Log.d(TAG, "doOnNext: " + uploadResponse);
+                        }
+                    })
+                    .doOnEach(new Action1<Notification<? super Response<Upload>>>() {
+                        @Override
+                        public void call(Notification<? super Response<Upload>> notification) {
+                            Log.d(TAG, "notification: " + notification);
+                        }
+                    })
+                    .subscribe(new Observer<Response<Upload>>() {
+                        @Override
+                        public void onCompleted() {
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            Log.d(TAG, "onError: " + e);
+                        }
+
+                        @Override
+                        public void onNext(Response<Upload> uploadResponse) {
+                            refreshListView(Integer.parseInt(uploadResponse.raw().headers().get("position")));
+                            Request t = uploadResponse.raw().request();
+                            Log.d(TAG, "uploadResponse: " + uploadResponse.raw().headers().get("position"));
+                            Log.d(TAG, "uploadResponse + request: " + t.headers().get("pos"));
+                        }
+                    });
+
         }
 
-        sub = Observable.merge(observables)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new ErrorAction(getContext()))
-                .doOnEach(new Action1<Notification<? super Response<Upload>>>() {
-                    @Override
-                    public void call(Notification<? super Response<Upload>> notification) {
-                        Log.d(TAG, "notification: " + notification);
-                    }
-                })
-                .subscribe(new Action1<Response<Upload>>() {
-                    @Override
-                    public void call(Response<Upload> uploadResponse) {
-                        refreshListView(Integer.parseInt(uploadResponse.raw().headers().get("position")));
-                        Request t = uploadResponse.raw().request();
-                        Log.d(TAG, "uploadResponse: " + uploadResponse.raw().headers().get("position"));
-                        Log.d(TAG, "uploadResponse + request: " + t.headers().get("pos"));
-                    }
-                });
 
     }
 
@@ -254,11 +282,31 @@ public class ExplorerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EventBus.getDefault().register(this);
         setHasOptionsMenu(true);
-        if (getArguments() != null) {
-        }
 
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Subscribe
+    public void onCancelEvent(CancelEvent event) {
+        Log.d(TAG, "onEvent: " + event.getPosition());
+        publishSubjectList.get(event.getPosition()).onNext("cancel");
+        boolean completed = publishSubjectList.get(event.getPosition()).hasCompleted();
+        Log.d(TAG, "onCancelRequest: " + completed);
+    }
+
+    @Subscribe
+    public void onCheckBoxEvent(CheckBoxEvent event) {
+        Log.d(TAG, "onCheckBoxEvent: " + event.getPosition());
+        positions.put(event.getPosition(), event.getPosition());
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -281,12 +329,12 @@ public class ExplorerFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        EventBus.getDefault().unregister(this);
         mListener = null;
     }
 
     public File[] read() {
         ExplorerFileModel explorerFileModel = new ExplorerFileModel(Environment.getExternalStorageDirectory().getAbsolutePath());
-        Log.d(TAG, "read: " + explorerFileModel.read().get(0).getName());
         File[] file = null;
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
@@ -309,17 +357,28 @@ public class ExplorerFragment extends Fragment {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.upload) {
-            List<Integer> positions = explorerAdapter.positions;
             Log.d(TAG, "onOptionsItemSelected: " + positions);
             multiUpload(positions);
             return true;
         }
 
-        if (id == R.id.checkBox1) {
+        if (id == R.id.checkbox) {
+            Log.d(TAG, "onOptionsItemSelected: " + publishSubjectList);
 
+/*            publishSubjectList.get(0).doOnSubscribe(new Action0() {
+                @Override
+                public void call() {
+                    Log.d(TAG, "call: " + "ok");
+                    //publishSubjectList.get(0).onNext("cancel");
+                }
+            });*/
+            if (sub != null && sub.isUnsubscribed() != true) {
+                //Log.d(TAG, "onOptionsItemSelected: " + sub);
+/*                publishSubjectList.get(0).onNext("cancel");
+                publishSubjectList.get(1).onNext("cancel");*/
+                //sub.unsubscribe();
+            }
             return true;
         }
 

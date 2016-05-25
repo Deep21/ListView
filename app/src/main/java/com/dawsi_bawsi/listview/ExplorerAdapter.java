@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,31 +24,22 @@ public class ExplorerAdapter extends BaseAdapter {
     public static final int FILE_VIEW = 0;
     public static final int FOLDER_VIEW = 1;
     private static final String TAG = "ExplorerAdapter";
-    List<FileModel> persons;
+    List<FileModel> modelList;
     Context context;
-    List<Integer> positions;
 
     public ExplorerAdapter(Context context, List<FileModel> objects) {
-        this.persons = objects;
+        this.modelList = objects;
         this.context = context;
-    }
-
-    public List<FileModel> getPersons() {
-        return persons;
-    }
-
-    public void setPersons(List<FileModel> persons) {
-        this.persons = persons;
     }
 
     @Override
     public int getCount() {
-        return persons.size();
+        return modelList.size();
     }
 
     @Override
     public FileModel getItem(int position) {
-        return persons.get(position);
+        return modelList.get(position);
     }
 
     @Override
@@ -69,6 +62,7 @@ public class ExplorerAdapter extends BaseAdapter {
                     viewHolder.txt1 = (TextView) convertView.findViewById(R.id.title2);
                     viewHolder.done = (ImageView) convertView.findViewById(R.id.done);
                     viewHolder.fileTypeIcone = (ImageView) convertView.findViewById(R.id.img);
+                    viewHolder.cancel = (TextView) convertView.findViewById(R.id.cancel);
                     viewHolder.checkBox = (CheckBox) convertView.findViewById(R.id.checkBox1);
                     convertView.setTag(viewHolder);
                     break;
@@ -86,21 +80,21 @@ public class ExplorerAdapter extends BaseAdapter {
         }
         viewHolder = (ViewHolder) convertView.getTag();
 
+        //Vue Fichier
         if (getItemViewType(position) == FILE_VIEW) {
+
             viewHolder.done.setImageResource(R.drawable.upload);
-            positions = new ArrayList<>();
-            //Log.d(TAG, "onCheckedChanged: " + position);
             Log.d(TAG, "getView: "+ getItem(position).isSelected());
             viewHolder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    // Log.d(TAG, "onCheckedChanged: " + isChecked);
-                    //Log.d(TAG, "onCheckedChanged: " + isChecked);
                     if (isChecked) {
-                        Log.d(TAG, "onCheckedChanged: " + isChecked);
+                        CheckBoxEvent checkBoxEvent = new CheckBoxEvent();
+                        checkBoxEvent.setPosition(position);
+                        EventBus.getDefault().post(checkBoxEvent);
                         getItem(position).setIsSelected(isChecked);
                         getItem(position).position = position;
-                        positions.add(position);
+
                     } else {
                         getItem(position).setIsSelected(isChecked);
                         Log.d(TAG, "else onCheckedChanged: " + isChecked);
@@ -109,7 +103,14 @@ public class ExplorerAdapter extends BaseAdapter {
 
                 }
             });
-
+            viewHolder.cancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    CancelEvent testEvent = new CancelEvent();
+                    testEvent.setPosition(position);
+                    EventBus.getDefault().post(testEvent);
+                }
+            });
             viewHolder.checkBox.setChecked(getItem(position).isSelected());
 
             //On initialise les vues par défaut
@@ -130,9 +131,6 @@ public class ExplorerAdapter extends BaseAdapter {
 
             }
 
-            //TODO
-            //Ajout de tableau ds le adaptor pour multi upload
-            //puis a lexterieur de ladaptor récupérer la liste et uploader
         } else if (getItemViewType(position) == FOLDER_VIEW) {
             viewHolder = (ViewHolder) convertView.getTag();
             viewHolder.nom.setText(getItem(position).getFile().getName());
@@ -159,6 +157,7 @@ public class ExplorerAdapter extends BaseAdapter {
 
     class ViewHolder {
         TextView txt1;
+        TextView cancel;
         ImageView fileTypeIcone;
         ImageView done;
         ProgressBar progressBar;

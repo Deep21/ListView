@@ -10,13 +10,21 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 
+import com.dawsi_bawsi.listview.DropboxApi;
+import com.dawsi_bawsi.listview.ExplorerFragment;
+import com.dawsi_bawsi.listview.HttpInterceptor;
+import com.dawsi_bawsi.listview.R;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity implements ExplorerFragment.OnFragmentInteractionListener{
+public class MainActivity extends AppCompatActivity implements ExplorerFragment.OnFragmentInteractionListener {
     public static final String BASE_URL = "https://content.dropboxapi.com/";
     private static final String TAG = "MainActivity";
     FrameLayout frameLayout;
@@ -32,6 +40,12 @@ public class MainActivity extends AppCompatActivity implements ExplorerFragment.
         super.onBackPressed();
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
+
     public DropboxApi getRetrofit() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
@@ -40,7 +54,6 @@ public class MainActivity extends AppCompatActivity implements ExplorerFragment.
                 .addInterceptor(httpInterceptor)
                 .addInterceptor(interceptor)
                 .build();
-
         return new Retrofit.Builder()
                 .client(client)
                 .baseUrl(BASE_URL)
@@ -50,10 +63,17 @@ public class MainActivity extends AppCompatActivity implements ExplorerFragment.
                 .create(DropboxApi.class);
     }
 
+    @Subscribe
+    public void onEventBackgroundThread(MyMessageEvent myEvent){
+        //client.dispatcher().cancelAll();
+        Log.d(TAG, "onEventBackgroundThread: " + myEvent.pos);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        EventBus.getDefault().register(this);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         dropboxApi = getRetrofit();
@@ -74,11 +94,6 @@ public class MainActivity extends AppCompatActivity implements ExplorerFragment.
         }
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        Log.d(TAG, "onSaveInstanceState: ");
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
