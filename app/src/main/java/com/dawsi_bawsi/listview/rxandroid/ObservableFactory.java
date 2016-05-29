@@ -1,4 +1,4 @@
-package com.dawsi_bawsi.listview;
+package com.dawsi_bawsi.listview.rxandroid;
 
 import rx.Observable;
 

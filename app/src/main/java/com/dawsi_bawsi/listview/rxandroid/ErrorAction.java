@@ -1,8 +1,9 @@
-package com.dawsi_bawsi.listview;
+package com.dawsi_bawsi.listview.rxandroid;
 
 import android.content.Context;
 import android.support.v7.app.AlertDialog;
 
+import com.dawsi_bawsi.listview.HttpInterceptor;
 import com.dawsi_bawsi.listview.model.Upload;
 
 import retrofit2.Response;

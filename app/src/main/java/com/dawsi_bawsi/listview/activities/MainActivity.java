@@ -1,44 +1,29 @@
-package com.dawsi_bawsi.listview;
+package com.dawsi_bawsi.listview.activities;
 
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 
 import com.dawsi_bawsi.listview.DropboxApi;
 import com.dawsi_bawsi.listview.ExplorerFragment;
-import com.dawsi_bawsi.listview.HttpInterceptor;
 import com.dawsi_bawsi.listview.R;
+import com.dawsi_bawsi.listview.eventbus.FragmentSelectEvent;
+import com.dawsi_bawsi.listview.fragments.DirectoryListFragment;
+import com.dawsi_bawsi.listview.fragments.FileFragment;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
+public class MainActivity extends BaseAbstractActivity implements ExplorerFragment.OnFragmentInteractionListener {
 
-public class MainActivity extends AppCompatActivity implements ExplorerFragment.OnFragmentInteractionListener {
-    public static final String BASE_URL = "https://content.dropboxapi.com/";
     private static final String TAG = "MainActivity";
     FrameLayout frameLayout;
-    HttpInterceptor httpInterceptor;
     DropboxApi dropboxApi;
-    OkHttpClient client;
-    public HttpInterceptor getHttpInterceptor() {
-        return httpInterceptor;
-    }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-    }
 
     @Override
     protected void onStop() {
@@ -46,28 +31,6 @@ public class MainActivity extends AppCompatActivity implements ExplorerFragment.
         EventBus.getDefault().unregister(this);
     }
 
-    public DropboxApi getRetrofit() {
-        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        httpInterceptor = new HttpInterceptor(this);
-        client = new OkHttpClient.Builder()
-                .addInterceptor(httpInterceptor)
-                .addInterceptor(interceptor)
-                .build();
-        return new Retrofit.Builder()
-                .client(client)
-                .baseUrl(BASE_URL)
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(DropboxApi.class);
-    }
-
-    @Subscribe
-    public void onEventBackgroundThread(MyMessageEvent myEvent){
-        //client.dispatcher().cancelAll();
-        Log.d(TAG, "onEventBackgroundThread: " + myEvent.pos);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,14 +47,47 @@ public class MainActivity extends AppCompatActivity implements ExplorerFragment.
     /**
      * Lance explorer Fragment
      */
-    public void lunchFragment(){
+    public void lunchFragment() {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        ExplorerFragment explorerFragment = (ExplorerFragment)getSupportFragmentManager().findFragmentByTag(ExplorerFragment.TAG);
-        if(explorerFragment == null){
+        ExplorerFragment explorerFragment = (ExplorerFragment) getSupportFragmentManager().findFragmentByTag(ExplorerFragment.TAG);
+        if (explorerFragment == null) {
             fragmentTransaction.add(R.id.frame_layout, ExplorerFragment.newInstance(), ExplorerFragment.TAG).commit();
-        }else{
+        } else {
             fragmentTransaction.replace(R.id.frame_layout, explorerFragment, ExplorerFragment.TAG).commit();
         }
+    }
+
+    @Subscribe
+    public void onFragmentSwitch(FragmentSelectEvent fragmentEvent) {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        switch (fragmentEvent.getFragmentName()) {
+            case FileFragment.TAG:
+                FileFragment fileFragment = (FileFragment) getSupportFragmentManager().findFragmentByTag(FileFragment.TAG);
+                if (fileFragment == null) {
+                    fragmentTransaction
+                            .replace(R.id.frame_layout, FileFragment.newInstance(fragmentEvent.getAbsolutePath()), FileFragment.TAG)
+                            .addToBackStack(null)
+                            .commit();
+                } else {
+                    fragmentTransaction.replace(R.id.frame_layout, fileFragment, FileFragment.TAG).commit();
+                }
+
+                break;
+
+            case DirectoryListFragment.TAG:
+                DirectoryListFragment directoryListFragment = (DirectoryListFragment) getSupportFragmentManager().findFragmentByTag(DirectoryListFragment.TAG);
+                if (directoryListFragment == null) {
+                    fragmentTransaction
+                            .replace(R.id.frame_layout, DirectoryListFragment.newInstance(fragmentEvent.getAbsolutePath()), DirectoryListFragment.TAG)
+                            .addToBackStack(null)
+                            .commit();
+                } else {
+                    fragmentTransaction.replace(R.id.frame_layout, directoryListFragment, DirectoryListFragment.TAG).commit();
+                }
+                break;
+
+        }
+
     }
 
 

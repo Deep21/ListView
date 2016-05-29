@@ -1,13 +1,10 @@
 package com.dawsi_bawsi.listview;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,6 +13,11 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import com.dawsi_bawsi.listview.eventbus.RxPublishSubjectCancelEvent;
+import com.dawsi_bawsi.listview.eventbus.CheckBoxEvent;
+import com.dawsi_bawsi.listview.eventbus.FragmentSelectEvent;
+import com.dawsi_bawsi.listview.activities.MainActivity;
+import com.dawsi_bawsi.listview.model.FileModel;
 import com.dawsi_bawsi.listview.model.Upload;
 
 import org.greenrobot.eventbus.EventBus;
@@ -23,7 +25,9 @@ import org.greenrobot.eventbus.Subscribe;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.Request;
 import retrofit2.Response;
@@ -32,6 +36,7 @@ import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
@@ -40,16 +45,17 @@ import rx.subjects.PublishSubject;
 public class ExplorerFragment extends Fragment {
     public static final String TAG = "ExplorerFragment";
     private static final String ABSOLUTE_PATH = "absolutePath";
-    private static final String ARG_PARAM2 = "param2";
     private static final boolean NOT_UPLOADED = true;
     ExplorerAdapter explorerAdapter;
     ListView listView;
     Subscription sub;
-    List<PublishSubject> publishSubjectList;
+    List<Integer> positions = new ArrayList<>();
+    List<Observable<Response<Upload>>> observables;
+    private Map<Integer, PublishSubject<Object>> publishSubjectMap;
     private File[] files;
     private String absolutePath;
-    private OnFragmentInteractionListener mListener;
-    SparseIntArray positions = new SparseIntArray();
+
+
     public ExplorerFragment() {
     }
 
@@ -73,13 +79,6 @@ public class ExplorerFragment extends Fragment {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        Log.d(TAG, "onSaveInstanceState: ");
-        super.onSaveInstanceState(outState);
-
-    }
-
-    @Override
     public void onDestroy() {
         if (sub != null)
             sub.unsubscribe();
@@ -88,28 +87,25 @@ public class ExplorerFragment extends Fragment {
     }
 
 
-    public void multiUpload(SparseIntArray sparseIntArray) {
+    public void multiUpload(List<Integer> positions) {
         //TODO lors du upload si on reviens on arrière : on prévien l'utilisateur
         //TODO mettre le pourcentage dans la barre de upload et le Mo
         DropboxApi dropboxapi = ((MainActivity) getActivity()).dropboxApi;
-        HttpInterceptor httpInterceptor = ((MainActivity) getActivity()).getHttpInterceptor();
-        List<Observable<Response<Upload>>> observables = new ArrayList<>();
-        publishSubjectList = new ArrayList<>();
-        if (sparseIntArray != null) {
-            for(int i = 0; i < sparseIntArray.size(); i++){
-                final int pos = sparseIntArray.get(i);
-                File file = explorerAdapter.getItem(pos).getFile();
+        observables = new ArrayList<>();
+        publishSubjectMap = new HashMap<>();
+        if (positions != null) {
+            for (final int position : positions) {
+                File file = explorerAdapter.getItem(position);
                 String params = DropboxGsonUtility.uploadParams(file);
                 ProgressFileRequestBody requestBody = new ProgressFileRequestBody(file, "application/octet-stream", new ProgressFileRequestBody.ProgressListener() {
                     @Override
                     public void transferred(long num) {
-                        publishProgress(pos, (int) num);
+                        publishProgress(position, (int) num);
                     }
                 });
-                httpInterceptor.setPosition(pos);
-                PublishSubject control = PublishSubject.create();
-                publishSubjectList.add(control);
-                Observable<Response<Upload>> cancellableRestrofitObservable = dropboxapi.uploadImage(requestBody, params, pos)
+                PublishSubject<Object> control = PublishSubject.create();
+                publishSubjectMap.put(position, control);
+                Observable<Response<Upload>> cancellableRestrofitObservable = dropboxapi.uploadImage(requestBody, params, position)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .takeUntil(control.asObservable());
@@ -122,6 +118,12 @@ public class ExplorerFragment extends Fragment {
                         @Override
                         public void call(Response<Upload> uploadResponse) {
                             Log.d(TAG, "doOnNext: " + uploadResponse);
+                        }
+                    })
+                    .doOnSubscribe(new Action0() {
+                        @Override
+                        public void call() {
+                            Log.d(TAG, "call: ");
                         }
                     })
                     .doOnEach(new Action1<Notification<? super Response<Upload>>>() {
@@ -160,117 +162,58 @@ public class ExplorerFragment extends Fragment {
             View v = listView.getChildAt(positionInListView);
             explorerAdapter.getItem(pos).setIsDownloaded(true);
             explorerAdapter.getView(pos, v, listView);
-            Log.d(TAG, "refreshListView: ");
         }
     }
 
 
     public void publishProgress(int position, int progress) {
         if (position >= listView.getFirstVisiblePosition() && position <= listView.getLastVisiblePosition()) {
-            Log.d(TAG, "publishProgress: ");
             int positionInListView = position - listView.getFirstVisiblePosition();
             View v = listView.getChildAt(positionInListView);
-            ProgressBar p = (ProgressBar) v.findViewById(R.id.progressBar);
-            p.setProgress(0);
-            p.setProgress(progress);
+            ExplorerAdapter.ViewHolder viewHolder = (ExplorerAdapter.ViewHolder) v.getTag();
+            ProgressBar progressBar = viewHolder.progressBar;
+            progressBar.setProgress(0);
+            progressBar.setProgress(progress);
         }
     }
 
     @Override
     public void onStop() {
+        if (sub != null)
+            sub.unsubscribe();
         super.onStop();
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        //deuxième lancement
-        if (getArguments() != null) {
-            List<FileModel> fileModels = new ArrayList<>();
-            absolutePath = getArguments().getString(ABSOLUTE_PATH);
-            File[] files = new File(absolutePath).listFiles();
-            for (File file : files) {
-                FileModel fileModel = new FileModel(file);
-                fileModels.add(fileModel);
-            }
-            explorerAdapter = new ExplorerAdapter(getContext(), fileModels);
-            listView.setAdapter(explorerAdapter);
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    final int pos = position;
-                    File f = new File(explorerAdapter.getItem(position).getFile().getAbsolutePath());
-                    //TODO Refactor
-                    if (f.isDirectory() && f.listFiles().length > 0) {
-                        if (mListener != null) {
-                            mListener.onCreateFolderFragment(f.getAbsolutePath());
-                        }
-                    }
-                    // cas d'un fichier
-                    else if (f.isFile()) {
-                        if (explorerAdapter.getItem(position).isDownloaded() != NOT_UPLOADED) {
-
-                        } else {
-                            AlertDialog.Builder builder1 = new AlertDialog.Builder(getContext());
-                            builder1.setTitle("Attention !");
-                            builder1.setMessage("Vous venez d'uploadé le même fichier, Voulez vous recommencez ?");
-                            builder1.setCancelable(true);
-                            builder1.setPositiveButton(
-                                    "Oui",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            if (pos >= listView.getFirstVisiblePosition() && pos <= listView.getLastVisiblePosition()) {
-                                                int positionInListView = pos - listView.getFirstVisiblePosition();
-                                                View v = listView.getChildAt(positionInListView);
-                                                explorerAdapter.getItem(pos).setIsDownloaded(false);
-                                                explorerAdapter.getView(pos, v, listView);
-                                            }
-                                            // upload(pos);
-                                        }
-                                    });
-
-                            builder1.setNegativeButton(
-                                    "Non",
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.cancel();
-                                        }
-                                    });
-
-                            AlertDialog alert11 = builder1.create();
-                            alert11.show();
-                        }
-
-                    }
-                    //TODO Refactor
-
-                }
-            });
-        }
         //premier lancement
-        else {
             List<FileModel> fileModels = new ArrayList<>();
             files = read();
-            for (File f : files) {
-                FileModel fileModel = new FileModel(f);
-                fileModels.add(fileModel);
-            }
-            explorerAdapter = new ExplorerAdapter(getContext(), fileModels);
-            listView.setAdapter(explorerAdapter);
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    String absolutePath = explorerAdapter.getItem(position).getFile().getAbsolutePath();
-                    File f = new File(absolutePath);
-                    //Je vérifie si c'est un dossier et que ce dossier contient des fichiers
-                    if (f.isDirectory() && f.listFiles().length > 0) {
-                        if (mListener != null) {
-                            mListener.onCreateFolderFragment(absolutePath);
+            if (files != null) {
+                for (File f : files) {
+                    FileModel fileModel = new FileModel(f);
+                    fileModels.add(fileModel);
+                }
+                explorerAdapter = new ExplorerAdapter(getContext(), fileModels);
+                listView.setAdapter(explorerAdapter);
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        String absolutePath = explorerAdapter.getItem(position).getAbsolutePath();
+                        File f = new File(absolutePath);
+                        //Je vérifie si c'est un dossier et que ce dossier contient des fichiers
+                        if (f.isDirectory() && f.listFiles().length > 0) {
+                            FragmentSelectEvent fragmentEvent = new FragmentSelectEvent();
+                            fragmentEvent.setFragementName("DirectoryListFragment");
+                            fragmentEvent.setAbsolutePath(f.getAbsolutePath());
+                            EventBus.getDefault().post(fragmentEvent);
                         }
                     }
-                }
-            });
-        }
+                });
+            }
+
+
     }
 
     @Override
@@ -294,17 +237,27 @@ public class ExplorerFragment extends Fragment {
     }
 
     @Subscribe
-    public void onCancelEvent(CancelEvent event) {
-        Log.d(TAG, "onEvent: " + event.getPosition());
-        publishSubjectList.get(event.getPosition()).onNext("cancel");
-        boolean completed = publishSubjectList.get(event.getPosition()).hasCompleted();
-        Log.d(TAG, "onCancelRequest: " + completed);
+    public void onCancelEvent(RxPublishSubjectCancelEvent event) {
+
+        observables.get(0).doOnRequest(new Action1<Long>() {
+            @Override
+            public void call(Long aLong) {
+                Log.d(TAG, "onREquest: ");
+            }
+        });
+        //publishSubjectMap.get(event.getPosition()).onNext("cancel");
+        //Log.d(TAG, "onCancelEvent: " + publishSubjectList.get(1));
     }
 
     @Subscribe
     public void onCheckBoxEvent(CheckBoxEvent event) {
-        Log.d(TAG, "onCheckBoxEvent: " + event.getPosition());
-        positions.put(event.getPosition(), event.getPosition());
+        if (event.isSetIsSelected())
+            positions.add(event.getPosition());
+
+        else if (event.isSetIsSelected() != true)
+            positions.remove(event.getPosition());
+
+        Log.d(TAG, "onCheckBoxEvent: " + positions);
     }
 
 
@@ -319,18 +272,12 @@ public class ExplorerFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
-        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         EventBus.getDefault().unregister(this);
-        mListener = null;
     }
 
     public File[] read() {
@@ -339,6 +286,9 @@ public class ExplorerFragment extends Fragment {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
+            Log.d(TAG, "read: " + f.listFiles());
+            Log.d(TAG, "read: " + Environment.getExternalStorageDirectory().getAbsolutePath());
+            Log.d(TAG, "read: " + f);
             return f.listFiles();
 
         } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
@@ -364,7 +314,14 @@ public class ExplorerFragment extends Fragment {
         }
 
         if (id == R.id.checkbox) {
-            Log.d(TAG, "onOptionsItemSelected: " + publishSubjectList);
+            // Log.d(TAG, "onOptionsItemSelected:" + publishSubjectMap.get(8).hasObservers());
+            Log.d(TAG, "onOptionsItemSelected: hascompleted" + publishSubjectMap.get(8).hasCompleted());
+            publishSubjectMap.get(8).doOnCompleted(new Action0() {
+                @Override
+                public void call() {
+                    Log.d(TAG, "doOnCompleted: ");
+                }
+            });
 
 /*            publishSubjectList.get(0).doOnSubscribe(new Action0() {
                 @Override

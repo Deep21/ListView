@@ -12,9 +12,12 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.dawsi_bawsi.listview.eventbus.RxPublishSubjectCancelEvent;
+import com.dawsi_bawsi.listview.eventbus.CheckBoxEvent;
+import com.dawsi_bawsi.listview.model.FileModel;
+
 import org.greenrobot.eventbus.EventBus;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -84,31 +87,24 @@ public class ExplorerAdapter extends BaseAdapter {
         if (getItemViewType(position) == FILE_VIEW) {
 
             viewHolder.done.setImageResource(R.drawable.upload);
-            Log.d(TAG, "getView: "+ getItem(position).isSelected());
             viewHolder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if (isChecked) {
-                        CheckBoxEvent checkBoxEvent = new CheckBoxEvent();
-                        checkBoxEvent.setPosition(position);
-                        EventBus.getDefault().post(checkBoxEvent);
-                        getItem(position).setIsSelected(isChecked);
-                        getItem(position).position = position;
-
-                    } else {
-                        getItem(position).setIsSelected(isChecked);
-                        Log.d(TAG, "else onCheckedChanged: " + isChecked);
-                        //positions.remove(position);
-                    }
-
+                    CheckBoxEvent checkBoxEvent = new CheckBoxEvent();
+                    checkBoxEvent.setPosition(position);
+                    checkBoxEvent.setSetIsSelected(isChecked);
+                    EventBus.getDefault().post(checkBoxEvent);
+                    getItem(position).setIsSelected(isChecked);
+                    getItem(position).setPosition(position);
                 }
             });
             viewHolder.cancel.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    CancelEvent testEvent = new CancelEvent();
-                    testEvent.setPosition(position);
-                    EventBus.getDefault().post(testEvent);
+                    RxPublishSubjectCancelEvent cancelEvent = new RxPublishSubjectCancelEvent();
+                    cancelEvent.setPosition(position);
+                    Log.d(TAG, "onClick: " + position);
+                    EventBus.getDefault().post(cancelEvent);
                 }
             });
             viewHolder.checkBox.setChecked(getItem(position).isSelected());
@@ -120,7 +116,7 @@ public class ExplorerAdapter extends BaseAdapter {
 
             if (getItem(position).isDownloaded() != true) {
                 viewHolder.progressBar.setProgress(getItem(position).EMPTY);
-                viewHolder.txt1.setText(getItem(position).getFile().getName());
+                viewHolder.txt1.setText(getItem(position).getName());
                 //viewHolder.done.setVisibility(View.INVISIBLE);
             }
             //Upload terminé
@@ -133,7 +129,7 @@ public class ExplorerAdapter extends BaseAdapter {
 
         } else if (getItemViewType(position) == FOLDER_VIEW) {
             viewHolder = (ViewHolder) convertView.getTag();
-            viewHolder.nom.setText(getItem(position).getFile().getName());
+            viewHolder.nom.setText(getItem(position).getName());
         }
 
         return convertView;
@@ -142,9 +138,9 @@ public class ExplorerAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        if (getItem(position).isFile) {
+        if (getItem(position).isFile()) {
             return FILE_VIEW;
-        } else if (getItem(position).getFile().isDirectory()) {
+        } else if (getItem(position).isDirectory()) {
             return FOLDER_VIEW;
         }
         return super.getItemViewType(position);

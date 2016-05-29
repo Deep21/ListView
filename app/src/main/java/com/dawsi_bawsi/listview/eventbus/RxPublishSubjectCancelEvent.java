@@ -1,9 +1,9 @@
-package com.dawsi_bawsi.listview;
+package com.dawsi_bawsi.listview.eventbus;
 
 /**
  * Created by Spartiate on 23/05/2016.
  */
-public class CheckBoxEvent {
+public class RxPublishSubjectCancelEvent {
 
     public int getPosition() {
         return position;
