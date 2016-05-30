@@ -49,6 +49,7 @@ public class ExplorerFragment extends Fragment {
     ExplorerAdapter explorerAdapter;
     ListView listView;
     Subscription sub;
+    MainActivity mainActivity;
     List<Integer> positions = new ArrayList<>();
     List<Observable<Response<Upload>>> observables;
     private Map<Integer, PublishSubject<Object>> publishSubjectMap;
@@ -90,7 +91,6 @@ public class ExplorerFragment extends Fragment {
     public void multiUpload(List<Integer> positions) {
         //TODO lors du upload si on reviens on arrière : on prévien l'utilisateur
         //TODO mettre le pourcentage dans la barre de upload et le Mo
-        DropboxApi dropboxapi = ((MainActivity) getActivity()).dropboxApi;
         observables = new ArrayList<>();
         publishSubjectMap = new HashMap<>();
         if (positions != null) {
@@ -105,7 +105,7 @@ public class ExplorerFragment extends Fragment {
                 });
                 PublishSubject<Object> control = PublishSubject.create();
                 publishSubjectMap.put(position, control);
-                Observable<Response<Upload>> cancellableRestrofitObservable = dropboxapi.uploadImage(requestBody, params, position)
+                Observable<Response<Upload>> cancellableRestrofitObservable =  mainActivity.getDropboxApi().uploadImage(requestBody, params, position)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .takeUntil(control.asObservable());
@@ -227,6 +227,7 @@ public class ExplorerFragment extends Fragment {
         super.onCreate(savedInstanceState);
         EventBus.getDefault().register(this);
         setHasOptionsMenu(true);
+        mainActivity = (MainActivity)getActivity();
 
     }
 

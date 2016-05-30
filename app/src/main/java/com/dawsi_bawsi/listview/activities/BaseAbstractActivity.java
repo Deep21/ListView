@@ -17,17 +17,24 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class BaseAbstractActivity extends AppCompatActivity {
     public static final String BASE_URL = "https://content.dropboxapi.com/";
-    private HttpInterceptor httpInterceptor;
-    private OkHttpClient client;
+    protected HttpInterceptor httpInterceptor;
+    protected OkHttpClient client;
 
-    public HttpInterceptor getHttpInterceptor() {
-        return httpInterceptor;
+    public DropboxApi getDropboxApi() {
+        return dropboxApi;
     }
+
+    public void setDropboxApi(DropboxApi dropboxApi) {
+        this.dropboxApi = dropboxApi;
+    }
+
+    protected DropboxApi dropboxApi;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        getRetrofit();
     }
 
     public DropboxApi getRetrofit() {

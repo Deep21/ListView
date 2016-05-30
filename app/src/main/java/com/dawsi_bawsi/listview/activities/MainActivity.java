@@ -19,10 +19,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 public class MainActivity extends BaseAbstractActivity implements ExplorerFragment.OnFragmentInteractionListener {
-
     private static final String TAG = "MainActivity";
     FrameLayout frameLayout;
-    DropboxApi dropboxApi;
 
 
     @Override
@@ -39,7 +37,6 @@ public class MainActivity extends BaseAbstractActivity implements ExplorerFragme
         EventBus.getDefault().register(this);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        dropboxApi = getRetrofit();
         frameLayout = (FrameLayout) findViewById(R.id.frame_layout);
         lunchFragment();
     }
